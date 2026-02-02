@@ -1,0 +1,37 @@
+# Binary builds
+/bin/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go specific
+go.work
+go.work.sum
+
+# SQLC generated files (Optional)
+# Catatan: Biasanya file hasil generate sqlc TETAP di-commit agar CI/CD bisa jalan 
+# tanpa install sqlc. Tapi jika kamu ingin generate ulang terus, buka comment di bawah:
+# internal/db/*.sql.go
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database local (jika pakai sqlite atau dump)
+*.db
+*.sqlite
+dump.rdb
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db

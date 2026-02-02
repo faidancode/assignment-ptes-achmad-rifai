@@ -46,33 +46,33 @@ migrate-create:
 
 .PHONY: migrate-up
 migrate-up:
-	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_URL)' up
+	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_MIGRATION_URL)' up
 
 .PHONY: migrate-down
 migrate-down:
-	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_URL)' down 1
+	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_MIGRATION_URL)' down 1
 
 .PHONY: migrate-force
 migrate-force:
-	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_URL)' force $(version)
+	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_MIGRATION_URL)' force $(version)
 
 .PHONY: migrate-status
 migrate-status:
-	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_URL)' version
+	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_MIGRATION_URL)' version
 
 # shortcut untuk dirty migration
 .PHONY: migrate-fix
 migrate-fix:
-	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_URL)' force $(version)
-	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_URL)' up
+	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_MIGRATION_URL)' force $(version)
+	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_MIGRATION_URL)' up
 
 # =========================
 # DATABASE (DEV ONLY)
 # =========================
 .PHONY: reset-dev
 reset-dev:
-	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_URL)' drop -f
-	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_URL)' up
+	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_MIGRATION_URL)' drop -f
+	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_MIGRATION_URL)' up
 	$(SQLC) generate
 
 # =========================

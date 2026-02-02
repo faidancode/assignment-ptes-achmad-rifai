@@ -50,15 +50,21 @@ FROM categories
 ORDER BY name ASC
 `
 
-func (q *Queries) GetCategories(ctx context.Context) ([]Category, error) {
+type GetCategoriesRow struct {
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+}
+
+func (q *Queries) GetCategories(ctx context.Context) ([]GetCategoriesRow, error) {
 	rows, err := q.query(ctx, q.getCategoriesStmt, getCategories)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Category
+	var items []GetCategoriesRow
 	for rows.Next() {
-		var i Category
+		var i GetCategoriesRow
 		if err := rows.Scan(&i.ID, &i.Name, &i.Description); err != nil {
 			return nil, err
 		}
@@ -83,9 +89,15 @@ WHERE id = ?
 LIMIT 1
 `
 
-func (q *Queries) GetCategoryByID(ctx context.Context, id string) (Category, error) {
+type GetCategoryByIDRow struct {
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+}
+
+func (q *Queries) GetCategoryByID(ctx context.Context, id string) (GetCategoryByIDRow, error) {
 	row := q.queryRow(ctx, q.getCategoryByIDStmt, getCategoryByID, id)
-	var i Category
+	var i GetCategoryByIDRow
 	err := row.Scan(&i.ID, &i.Name, &i.Description)
 	return i, err
 }

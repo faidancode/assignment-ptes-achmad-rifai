@@ -11,11 +11,6 @@
 go.work
 go.work.sum
 
-# SQLC generated files (Optional)
-# Catatan: Biasanya file hasil generate sqlc TETAP di-commit agar CI/CD bisa jalan 
-# tanpa install sqlc. Tapi jika kamu ingin generate ulang terus, buka comment di bawah:
-# internal/db/*.sql.go
-
 # Environment variables
 .env
 .env.local
@@ -35,3 +30,5 @@ dump.rdb
 # OS specific
 .DS_Store
 Thumbs.db
+
+/reference

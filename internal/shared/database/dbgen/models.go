@@ -6,10 +6,28 @@ package dbgen
 
 import (
 	"database/sql"
+	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 type Category struct {
 	ID          string         `json:"id"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
+	IsActive    bool           `json:"is_active"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+type Product struct {
+	ID            string          `json:"id"`
+	Name          string          `json:"name"`
+	Description   sql.NullString  `json:"description"`
+	Price         decimal.Decimal `json:"price"`
+	CategoryID    string          `json:"category_id"`
+	StockQuantity int32           `json:"stock_quantity"`
+	IsActive      bool            `json:"is_active"`
+	CreatedAt     time.Time       `json:"created_at"`
+	UpdatedAt     time.Time       `json:"updated_at"`
 }

@@ -24,11 +24,20 @@ func New(db DBTX) *Queries {
 func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	q := Queries{db: db}
 	var err error
+	if q.countProductsStmt, err = db.PrepareContext(ctx, countProducts); err != nil {
+		return nil, fmt.Errorf("error preparing query CountProducts: %w", err)
+	}
 	if q.createCategoryStmt, err = db.PrepareContext(ctx, createCategory); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateCategory: %w", err)
 	}
+	if q.createProductStmt, err = db.PrepareContext(ctx, createProduct); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateProduct: %w", err)
+	}
 	if q.deleteCategoryStmt, err = db.PrepareContext(ctx, deleteCategory); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteCategory: %w", err)
+	}
+	if q.deleteProductStmt, err = db.PrepareContext(ctx, deleteProduct); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteProduct: %w", err)
 	}
 	if q.getCategoriesStmt, err = db.PrepareContext(ctx, getCategories); err != nil {
 		return nil, fmt.Errorf("error preparing query GetCategories: %w", err)
@@ -36,22 +45,46 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getCategoryByIDStmt, err = db.PrepareContext(ctx, getCategoryByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetCategoryByID: %w", err)
 	}
+	if q.getProductByIDStmt, err = db.PrepareContext(ctx, getProductByID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetProductByID: %w", err)
+	}
+	if q.listProductsStmt, err = db.PrepareContext(ctx, listProducts); err != nil {
+		return nil, fmt.Errorf("error preparing query ListProducts: %w", err)
+	}
 	if q.updateCategoryStmt, err = db.PrepareContext(ctx, updateCategory); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateCategory: %w", err)
+	}
+	if q.updateProductStmt, err = db.PrepareContext(ctx, updateProduct); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateProduct: %w", err)
 	}
 	return &q, nil
 }
 
 func (q *Queries) Close() error {
 	var err error
+	if q.countProductsStmt != nil {
+		if cerr := q.countProductsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing countProductsStmt: %w", cerr)
+		}
+	}
 	if q.createCategoryStmt != nil {
 		if cerr := q.createCategoryStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createCategoryStmt: %w", cerr)
 		}
 	}
+	if q.createProductStmt != nil {
+		if cerr := q.createProductStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createProductStmt: %w", cerr)
+		}
+	}
 	if q.deleteCategoryStmt != nil {
 		if cerr := q.deleteCategoryStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteCategoryStmt: %w", cerr)
+		}
+	}
+	if q.deleteProductStmt != nil {
+		if cerr := q.deleteProductStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteProductStmt: %w", cerr)
 		}
 	}
 	if q.getCategoriesStmt != nil {
@@ -64,9 +97,24 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getCategoryByIDStmt: %w", cerr)
 		}
 	}
+	if q.getProductByIDStmt != nil {
+		if cerr := q.getProductByIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getProductByIDStmt: %w", cerr)
+		}
+	}
+	if q.listProductsStmt != nil {
+		if cerr := q.listProductsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing listProductsStmt: %w", cerr)
+		}
+	}
 	if q.updateCategoryStmt != nil {
 		if cerr := q.updateCategoryStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateCategoryStmt: %w", cerr)
+		}
+	}
+	if q.updateProductStmt != nil {
+		if cerr := q.updateProductStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateProductStmt: %w", cerr)
 		}
 	}
 	return err
@@ -108,21 +156,33 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 type Queries struct {
 	db                  DBTX
 	tx                  *sql.Tx
+	countProductsStmt   *sql.Stmt
 	createCategoryStmt  *sql.Stmt
+	createProductStmt   *sql.Stmt
 	deleteCategoryStmt  *sql.Stmt
+	deleteProductStmt   *sql.Stmt
 	getCategoriesStmt   *sql.Stmt
 	getCategoryByIDStmt *sql.Stmt
+	getProductByIDStmt  *sql.Stmt
+	listProductsStmt    *sql.Stmt
 	updateCategoryStmt  *sql.Stmt
+	updateProductStmt   *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
 		db:                  tx,
 		tx:                  tx,
+		countProductsStmt:   q.countProductsStmt,
 		createCategoryStmt:  q.createCategoryStmt,
+		createProductStmt:   q.createProductStmt,
 		deleteCategoryStmt:  q.deleteCategoryStmt,
+		deleteProductStmt:   q.deleteProductStmt,
 		getCategoriesStmt:   q.getCategoriesStmt,
 		getCategoryByIDStmt: q.getCategoryByIDStmt,
+		getProductByIDStmt:  q.getProductByIDStmt,
+		listProductsStmt:    q.listProductsStmt,
 		updateCategoryStmt:  q.updateCategoryStmt,
+		updateProductStmt:   q.updateProductStmt,
 	}
 }

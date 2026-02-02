@@ -52,10 +52,7 @@ func (s *service) Create(
 	}, nil
 }
 
-func (s *service) List(
-	ctx context.Context,
-) ([]CategoryResponse, error) {
-
+func (s *service) List(ctx context.Context) ([]CategoryResponse, error) {
 	rows, err := s.repo.GetCategories(ctx)
 	if err != nil {
 		return nil, err
@@ -63,7 +60,8 @@ func (s *service) List(
 
 	res := make([]CategoryResponse, 0, len(rows))
 	for _, row := range rows {
-		res = append(res, mapToResponse(row))
+		// Panggil helper dengan parameter mentah
+		res = append(res, toResponse(row.ID, row.Name))
 	}
 
 	return res, nil
@@ -115,9 +113,16 @@ func (s *service) Delete(
 Helper
 */
 
-func mapToResponse(cat dbgen.Category) CategoryResponse {
+func mapToResponse(cat dbgen.GetCategoryByIDRow) CategoryResponse {
 	return CategoryResponse{
 		ID:   cat.ID,
 		Name: cat.Name,
+	}
+}
+
+func toResponse(id string, name string) CategoryResponse {
+	return CategoryResponse{
+		ID:   id,
+		Name: name,
 	}
 }

@@ -81,7 +81,7 @@ func TestService_List(t *testing.T) {
 
 		repo.EXPECT().
 			GetCategories(ctx).
-			Return([]dbgen.Category{
+			Return([]dbgen.GetCategoriesRow{
 				{ID: "1", Name: "Food"},
 				{ID: "2", Name: "Drink"},
 			}, nil)
@@ -114,7 +114,7 @@ func TestService_GetByID(t *testing.T) {
 
 		repo.EXPECT().
 			GetByID(ctx, id).
-			Return(dbgen.Category{
+			Return(dbgen.GetCategoryByIDRow{
 				ID:   id,
 				Name: "Food",
 			}, nil)
@@ -130,7 +130,7 @@ func TestService_GetByID(t *testing.T) {
 
 		repo.EXPECT().
 			GetByID(ctx, id).
-			Return(dbgen.Category{}, category.ErrCategoryNotFound)
+			Return(dbgen.GetCategoryByIDRow{}, category.ErrCategoryNotFound)
 
 		_, err := svc.GetByID(ctx, id)
 
@@ -142,7 +142,7 @@ func TestService_GetByID(t *testing.T) {
 
 		repo.EXPECT().
 			GetByID(ctx, id).
-			Return(dbgen.Category{}, errors.New("db error"))
+			Return(dbgen.GetCategoryByIDRow{}, errors.New("db error"))
 
 		_, err := svc.GetByID(ctx, id)
 

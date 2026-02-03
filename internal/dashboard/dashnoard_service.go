@@ -10,6 +10,7 @@ import (
 
 type Service interface {
 	GetProductDashboard(ctx context.Context) (ProductReportResponse, error)
+	GetTopCustomers(ctx context.Context, limit int32) ([]TopCustomerResponse, error)
 }
 
 type service struct {
@@ -68,4 +69,29 @@ func (s *service) GetProductDashboard(ctx context.Context) (ProductReportRespons
 	s.rdb.Set(ctx, cacheKey, jsonData, 5*time.Minute)
 
 	return finalResp, nil
+}
+
+// internal/modules/dashboard/service.go
+
+func (s *service) GetTopCustomers(ctx context.Context, limit int32) ([]TopCustomerResponse, error) {
+	// 1. Ambil data dari Repository (hasil generate SQLC)
+	rows, err := s.repo.GetTopCustomers(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Mapping ke DTO
+	var resp []TopCustomerResponse
+	for _, r := range rows {
+		spent, _ := r.TotalSpent.Float64()
+		resp = append(resp, TopCustomerResponse{
+			ID:          r.ID,
+			Name:        r.Name,
+			Email:       r.Email,
+			TotalSpent:  spent,
+			TotalOrders: r.TotalOrders,
+		})
+	}
+
+	return resp, nil
 }

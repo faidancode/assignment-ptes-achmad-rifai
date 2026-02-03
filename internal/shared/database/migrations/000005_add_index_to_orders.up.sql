@@ -1,0 +1,1 @@
+CREATE INDEX idx_orders_customer_id_total_price ON orders(customer_id, total_price);

@@ -9,6 +9,8 @@ import (
 type Repository interface {
 	GetProductReport(ctx context.Context) (dbgen.GetProductDashboardReportRow, error)
 	GetRecentProducts(ctx context.Context, limit int32) ([]dbgen.GetRecentProductsRow, error)
+
+	GetTopCustomers(ctx context.Context, limit int32) ([]dbgen.GetTopCustomersRow, error)
 }
 
 type repository struct {
@@ -25,4 +27,8 @@ func (r *repository) GetProductReport(ctx context.Context) (dbgen.GetProductDash
 
 func (r *repository) GetRecentProducts(ctx context.Context, limit int32) ([]dbgen.GetRecentProductsRow, error) {
 	return r.q.GetRecentProducts(ctx, limit)
+}
+
+func (r *repository) GetTopCustomers(ctx context.Context, limit int32) ([]dbgen.GetTopCustomersRow, error) {
+	return r.q.GetTopCustomers(ctx, limit)
 }

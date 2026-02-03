@@ -1,0 +1,1 @@
+DROP INDEX idx_orders_customer_id_total_price ON orders;

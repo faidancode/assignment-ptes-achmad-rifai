@@ -70,3 +70,18 @@ func (mr *MockRepositoryMockRecorder) GetRecentProducts(ctx, limit any) *gomock.
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecentProducts", reflect.TypeOf((*MockRepository)(nil).GetRecentProducts), ctx, limit)
 }
+
+// GetTopCustomers mocks base method.
+func (m *MockRepository) GetTopCustomers(ctx context.Context, limit int32) ([]dbgen.GetTopCustomersRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTopCustomers", ctx, limit)
+	ret0, _ := ret[0].([]dbgen.GetTopCustomersRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTopCustomers indicates an expected call of GetTopCustomers.
+func (mr *MockRepositoryMockRecorder) GetTopCustomers(ctx, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTopCustomers", reflect.TypeOf((*MockRepository)(nil).GetTopCustomers), ctx, limit)
+}

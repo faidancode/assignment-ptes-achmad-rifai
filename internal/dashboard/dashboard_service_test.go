@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"assignment-ptes-achmad-rifai/internal/shared/database/dbgen"
 
 	"github.com/go-redis/redismock/v9"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -67,5 +69,58 @@ func TestService_GetProductDashboard(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, int64(50), result.TotalProducts)
 		assert.Nil(t, result.CachedAt) // Dari DB, CachedAt harusnya nil
+	})
+}
+
+func TestService_GetTopCustomers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock.NewMockRepository(ctrl)
+	// Kita asumsikan dashboard service menggunakan repo yang sama
+	service := NewService(mockRepo, nil)
+	ctx := context.Background()
+
+	t.Run("Success - Get Top Customers", func(t *testing.T) {
+		mockRows := []dbgen.GetTopCustomersRow{
+			{ID: "uuid-1", Name: "Rifai", Email: "rifai@test.com", TotalSpent: decimal.NewFromInt(500000), TotalOrders: 5},
+		}
+
+		mockRepo.EXPECT().GetTopCustomers(ctx, int32(5)).Return(mockRows, nil)
+
+		result, err := service.GetTopCustomers(ctx, 5)
+
+		assert.NoError(t, err)
+		assert.Equal(t, 500000.0, result[0].TotalSpent)
+		assert.Equal(t, "Rifai", result[0].Name)
+	})
+
+	t.Run("Negative - Database Error", func(t *testing.T) {
+		limit := int32(5)
+
+		// Skenario: Repository mengembalikan error (misal: koneksi putus)
+		mockRepo.EXPECT().
+			GetTopCustomers(ctx, limit).
+			Return(nil, errors.New("database connection lost"))
+
+		result, err := service.GetTopCustomers(ctx, limit)
+
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, "database connection lost", err.Error())
+	})
+
+	t.Run("Negative - No Data Found", func(t *testing.T) {
+		limit := int32(5)
+
+		// Skenario: Database normal, tapi tidak ada data order sama sekali (array kosong)
+		mockRepo.EXPECT().
+			GetTopCustomers(ctx, limit).
+			Return([]dbgen.GetTopCustomersRow{}, nil)
+
+		result, err := service.GetTopCustomers(ctx, limit)
+
+		assert.NoError(t, err)
+		assert.Len(t, result, 0) // Hasil harus array kosong, bukan error
 	})
 }

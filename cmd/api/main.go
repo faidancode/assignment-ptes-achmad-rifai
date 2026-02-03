@@ -4,6 +4,7 @@ package main
 import (
 	"assignment-ptes-achmad-rifai/internal/bootstrap"
 	"assignment-ptes-achmad-rifai/internal/category"
+	"assignment-ptes-achmad-rifai/internal/customer"
 	"assignment-ptes-achmad-rifai/internal/product"
 	"assignment-ptes-achmad-rifai/internal/shared/database/dbgen"
 	"database/sql"
@@ -20,6 +21,7 @@ import (
 type ControllerRegistry struct {
 	Category *category.Handler
 	Product  *product.Handler
+	Customer *customer.Handler
 }
 
 func main() {
@@ -52,9 +54,14 @@ func main() {
 	productService := product.NewService(productRepo)
 	productHandler := product.NewHandler(productService)
 
+	customerRepo := customer.NewRepository(queries)
+	customerService := customer.NewService(customerRepo)
+	customerHandler := customer.NewHandler(customerService)
+
 	registry := ControllerRegistry{
 		Category: categoryHandler,
 		Product:  productHandler,
+		Customer: customerHandler,
 	}
 
 	// 4. Router Setup
@@ -65,6 +72,7 @@ func main() {
 	{
 		category.RegisterRoutes(api, registry.Category)
 		product.RegisterRoutes(api, registry.Product)
+		customer.RegisterRoutes(api, registry.Customer)
 	}
 
 	// 5. Audit logger & Server Config

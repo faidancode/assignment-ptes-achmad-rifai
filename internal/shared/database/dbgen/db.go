@@ -30,11 +30,17 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createCategoryStmt, err = db.PrepareContext(ctx, createCategory); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateCategory: %w", err)
 	}
+	if q.createCustomerStmt, err = db.PrepareContext(ctx, createCustomer); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateCustomer: %w", err)
+	}
 	if q.createProductStmt, err = db.PrepareContext(ctx, createProduct); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateProduct: %w", err)
 	}
 	if q.deleteCategoryStmt, err = db.PrepareContext(ctx, deleteCategory); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteCategory: %w", err)
+	}
+	if q.deleteCustomerStmt, err = db.PrepareContext(ctx, deleteCustomer); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteCustomer: %w", err)
 	}
 	if q.deleteProductStmt, err = db.PrepareContext(ctx, deleteProduct); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteProduct: %w", err)
@@ -45,6 +51,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getCategoryByIDStmt, err = db.PrepareContext(ctx, getCategoryByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetCategoryByID: %w", err)
 	}
+	if q.getCustomerByIDStmt, err = db.PrepareContext(ctx, getCustomerByID); err != nil {
+		return nil, fmt.Errorf("error preparing query GetCustomerByID: %w", err)
+	}
+	if q.getCustomersStmt, err = db.PrepareContext(ctx, getCustomers); err != nil {
+		return nil, fmt.Errorf("error preparing query GetCustomers: %w", err)
+	}
 	if q.getProductByIDStmt, err = db.PrepareContext(ctx, getProductByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetProductByID: %w", err)
 	}
@@ -53,6 +65,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.updateCategoryStmt, err = db.PrepareContext(ctx, updateCategory); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateCategory: %w", err)
+	}
+	if q.updateCustomerStmt, err = db.PrepareContext(ctx, updateCustomer); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateCustomer: %w", err)
 	}
 	if q.updateProductStmt, err = db.PrepareContext(ctx, updateProduct); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateProduct: %w", err)
@@ -72,6 +87,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing createCategoryStmt: %w", cerr)
 		}
 	}
+	if q.createCustomerStmt != nil {
+		if cerr := q.createCustomerStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createCustomerStmt: %w", cerr)
+		}
+	}
 	if q.createProductStmt != nil {
 		if cerr := q.createProductStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createProductStmt: %w", cerr)
@@ -80,6 +100,11 @@ func (q *Queries) Close() error {
 	if q.deleteCategoryStmt != nil {
 		if cerr := q.deleteCategoryStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing deleteCategoryStmt: %w", cerr)
+		}
+	}
+	if q.deleteCustomerStmt != nil {
+		if cerr := q.deleteCustomerStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteCustomerStmt: %w", cerr)
 		}
 	}
 	if q.deleteProductStmt != nil {
@@ -97,6 +122,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getCategoryByIDStmt: %w", cerr)
 		}
 	}
+	if q.getCustomerByIDStmt != nil {
+		if cerr := q.getCustomerByIDStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getCustomerByIDStmt: %w", cerr)
+		}
+	}
+	if q.getCustomersStmt != nil {
+		if cerr := q.getCustomersStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getCustomersStmt: %w", cerr)
+		}
+	}
 	if q.getProductByIDStmt != nil {
 		if cerr := q.getProductByIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getProductByIDStmt: %w", cerr)
@@ -110,6 +145,11 @@ func (q *Queries) Close() error {
 	if q.updateCategoryStmt != nil {
 		if cerr := q.updateCategoryStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateCategoryStmt: %w", cerr)
+		}
+	}
+	if q.updateCustomerStmt != nil {
+		if cerr := q.updateCustomerStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateCustomerStmt: %w", cerr)
 		}
 	}
 	if q.updateProductStmt != nil {
@@ -158,14 +198,19 @@ type Queries struct {
 	tx                  *sql.Tx
 	countProductsStmt   *sql.Stmt
 	createCategoryStmt  *sql.Stmt
+	createCustomerStmt  *sql.Stmt
 	createProductStmt   *sql.Stmt
 	deleteCategoryStmt  *sql.Stmt
+	deleteCustomerStmt  *sql.Stmt
 	deleteProductStmt   *sql.Stmt
 	getCategoriesStmt   *sql.Stmt
 	getCategoryByIDStmt *sql.Stmt
+	getCustomerByIDStmt *sql.Stmt
+	getCustomersStmt    *sql.Stmt
 	getProductByIDStmt  *sql.Stmt
 	listProductsStmt    *sql.Stmt
 	updateCategoryStmt  *sql.Stmt
+	updateCustomerStmt  *sql.Stmt
 	updateProductStmt   *sql.Stmt
 }
 
@@ -175,14 +220,19 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		tx:                  tx,
 		countProductsStmt:   q.countProductsStmt,
 		createCategoryStmt:  q.createCategoryStmt,
+		createCustomerStmt:  q.createCustomerStmt,
 		createProductStmt:   q.createProductStmt,
 		deleteCategoryStmt:  q.deleteCategoryStmt,
+		deleteCustomerStmt:  q.deleteCustomerStmt,
 		deleteProductStmt:   q.deleteProductStmt,
 		getCategoriesStmt:   q.getCategoriesStmt,
 		getCategoryByIDStmt: q.getCategoryByIDStmt,
+		getCustomerByIDStmt: q.getCustomerByIDStmt,
+		getCustomersStmt:    q.getCustomersStmt,
 		getProductByIDStmt:  q.getProductByIDStmt,
 		listProductsStmt:    q.listProductsStmt,
 		updateCategoryStmt:  q.updateCategoryStmt,
+		updateCustomerStmt:  q.updateCustomerStmt,
 		updateProductStmt:   q.updateProductStmt,
 	}
 }

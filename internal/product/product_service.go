@@ -5,6 +5,7 @@ import (
 	"assignment-ptes-achmad-rifai/internal/shared/database/helper"
 	"context"
 	"database/sql"
+	"fmt"
 )
 
 //go:generate mockgen -source=product_service.go -destination=mocks/product_service_mock.go -package=mock
@@ -40,11 +41,11 @@ func (s *service) Create(
 
 	params := dbgen.CreateProductParams{
 		Name:          req.Name,
-		Description:   helper.NewNullString(req.Description),
-		Price:         helper.ToDecimal(req.Price),
+		Description:   helper.StringToNull(req.Description),
+		Price:         helper.Float64ToDecimal(req.Price),
 		CategoryID:    req.CategoryID,
 		StockQuantity: int32(req.StockQuantity),
-		IsActive:      helper.BoolValue(req.IsActive, true),
+		IsActive:      helper.BoolPtrValue(req.IsActive, true),
 	}
 
 	if err := s.repo.Create(ctx, params); err != nil {
@@ -53,10 +54,10 @@ func (s *service) Create(
 
 	return ProductResponse{
 		Name:          req.Name,
-		Description:   helper.StringValue(req.Description),
+		Description:   helper.StringPtrValue(req.Description),
 		Price:         req.Price,
 		StockQuantity: req.StockQuantity,
-		IsActive:      helper.BoolValue(req.IsActive, true),
+		IsActive:      helper.BoolPtrValue(req.IsActive, true),
 		Category: CategoryResponse{
 			ID: req.CategoryID,
 		},
@@ -69,19 +70,21 @@ func (s *service) List(
 
 	limit := int32(p.PageSize)
 	offset := int32((p.Page - 1) * p.PageSize)
+	fmt.Println(p)
 
 	// 1. Tambahkan semua field filter ke dalam ListProductsParams
 	rows, err := s.repo.List(ctx, dbgen.ListProductsParams{
-		SearchName: helper.NewNullString(p.Name),
-		CategoryID: helper.NewNullString(p.Category),
-		MinPrice:   helper.NewNullDecimal(p.MinPrice),
-		MaxPrice:   helper.NewNullDecimal(p.MaxPrice),
-		MinStock:   helper.NewNullInt32(p.MinStock),
-		MaxStock:   helper.NewNullInt32(p.MaxStock),
-		OrderBy:    helper.StringValue(p.Sort),
+		SearchName: helper.StringPtrValue(p.Name),          // "" = no filter
+		CategoryID: helper.StringPtrValue(p.Category),      // "" = no filter
+		MinPrice:   helper.Float64PtrToDecimal(p.MinPrice), // 0 = no filter
+		MaxPrice:   helper.Float64PtrToDecimal(p.MaxPrice),
+		MinStock:   helper.Int32PtrValue(p.MinStock), // 0 = no filter
+		MaxStock:   helper.Int32PtrValue(p.MaxStock),
+		OrderBy:    helper.StringPtrValue(p.Sort),
 		Limit:      limit,
 		Offset:     offset,
 	})
+
 	if err != nil {
 		return nil, 0, err
 	}
@@ -89,12 +92,12 @@ func (s *service) List(
 	// 2. Penting: Count juga harus menerima filter yang sama
 	// agar jumlah total data sinkron dengan filter yang aktif
 	total, err := s.repo.Count(ctx, dbgen.CountProductsParams{
-		SearchName: helper.NewNullString(p.Name),
-		CategoryID: helper.NewNullString(p.Category),
-		MinPrice:   helper.NewNullDecimal(p.MinPrice),
-		MaxPrice:   helper.NewNullDecimal(p.MaxPrice),
-		MinStock:   helper.NewNullInt32(p.MinStock),
-		MaxStock:   helper.NewNullInt32(p.MaxStock),
+		SearchName: helper.StringPtrValue(p.Name),          // "" = no filter
+		CategoryID: helper.StringPtrValue(p.Category),      // "" = no filter
+		MinPrice:   helper.Float64PtrToDecimal(p.MinPrice), // 0 = no filter
+		MaxPrice:   helper.Float64PtrToDecimal(p.MaxPrice),
+		MinStock:   helper.Int32PtrValue(p.MinStock), // 0 = no filter
+		MaxStock:   helper.Int32PtrValue(p.MaxStock),
 	})
 	if err != nil {
 		return nil, 0, err
@@ -127,11 +130,11 @@ func (s *service) Update(
 	params := dbgen.UpdateProductParams{
 		ID:            id,
 		Name:          req.Name,
-		Description:   helper.NewNullString(req.Description),
-		Price:         helper.ToDecimal(req.Price),
+		Description:   helper.StringToNull(req.Description),
+		Price:         helper.Float64ToDecimal(req.Price),
 		CategoryID:    req.CategoryID,
 		StockQuantity: int32(req.StockQuantity),
-		IsActive:      helper.BoolValue(req.IsActive, true),
+		IsActive:      helper.BoolPtrValue(req.IsActive, true),
 	}
 
 	if err := s.repo.Update(ctx, params); err != nil {
@@ -150,8 +153,9 @@ func mapListToResponse(r dbgen.ListProductsRow) ProductResponse {
 		ID:            r.ID,
 		Name:          r.Name,
 		Description:   r.Description.String,
-		Price:         helper.FloatFromDecimal(r.Price),
+		Price:         helper.DecimalToFloat64(r.Price),
 		StockQuantity: int(r.StockQuantity),
+		TotalSold:     int(r.TotalSold),
 		IsActive:      r.IsActive,
 		Category: CategoryResponse{
 			ID:   r.CategoryID,
@@ -166,7 +170,7 @@ func mapDetailToResponse(r dbgen.GetProductByIDRow) ProductResponse {
 		ID:            r.ID,
 		Name:          r.Name,
 		Description:   r.Description.String,
-		Price:         helper.FloatFromDecimal(r.Price),
+		Price:         helper.DecimalToFloat64(r.Price),
 		StockQuantity: int(r.StockQuantity),
 		IsActive:      r.IsActive,
 		Category: CategoryResponse{

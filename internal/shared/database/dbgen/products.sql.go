@@ -15,43 +15,43 @@ import (
 
 const countProducts = `-- name: CountProducts :one
 SELECT
-    COUNT(*) AS total
+    COUNT(DISTINCT p.id) AS total
 FROM
     products p
 WHERE
     (
-        ? IS NULL
+        ? = ''
         OR p.name LIKE CONCAT ('%', ?, '%')
     )
     AND (
-        ? IS NULL
+        ? = ''
         OR p.category_id = ?
     )
     AND (
-        ? IS NULL
+        ? = 0
         OR p.price >= ?
     )
     AND (
-        ? IS NULL
+        ? = 0
         OR p.price <= ?
     )
     AND (
-        ? IS NULL
+        ? = 0
         OR p.stock_quantity >= ?
     )
     AND (
-        ? IS NULL
+        ? = 0
         OR p.stock_quantity <= ?
     )
 `
 
 type CountProductsParams struct {
-	SearchName interface{}         `json:"search_name"`
-	CategoryID sql.NullString      `json:"category_id"`
-	MinPrice   decimal.NullDecimal `json:"min_price"`
-	MaxPrice   decimal.NullDecimal `json:"max_price"`
-	MinStock   sql.NullInt32       `json:"min_stock"`
-	MaxStock   sql.NullInt32       `json:"max_stock"`
+	SearchName interface{}     `json:"search_name"`
+	CategoryID string          `json:"category_id"`
+	MinPrice   decimal.Decimal `json:"min_price"`
+	MaxPrice   decimal.Decimal `json:"max_price"`
+	MinStock   int32           `json:"min_stock"`
+	MaxStock   int32           `json:"max_stock"`
 }
 
 func (q *Queries) CountProducts(ctx context.Context, arg CountProductsParams) (int64, error) {
@@ -188,53 +188,43 @@ SELECT
     p.is_active,
     p.created_at,
     c.id AS category_id,
-    c.name AS category_name
+    c.name AS category_name,
+    CAST(IFNULL (SUM(oi.quantity), 0) AS UNSIGNED) AS total_sold
 FROM
     products p
     JOIN categories c ON c.id = p.category_id
+    LEFT JOIN order_items oi ON oi.product_id = p.id
 WHERE
     (
-        ? IS NULL
+        ? = ''
         OR p.name LIKE CONCAT ('%', ?, '%')
     )
     AND (
-        ? IS NULL
+        ? = ''
         OR p.category_id = ?
     )
-    AND p.price >= IFNULL (
-        CAST(? AS DECIMAL(10, 2)),
-        0
-    )
-    AND p.price <= IFNULL (
-        CAST(? AS DECIMAL(10, 2)),
-        999999999.99
+    AND (
+        ? = 0
+        OR p.price >= ?
     )
     AND (
-        ? IS NULL
+        ? = 0
+        OR p.price <= ?
+    )
+    AND (
+        ? = 0
         OR p.stock_quantity >= ?
     )
     AND (
-        ? IS NULL
+        ? = 0
         OR p.stock_quantity <= ?
     )
+GROUP BY
+    p.id,
+    c.id
 ORDER BY
     CASE
-        WHEN ? = 'name_asc' THEN p.name
-    END ASC,
-    CASE
-        WHEN ? = 'name_desc' THEN p.name
-    END DESC,
-    CASE
-        WHEN ? = 'price_asc' THEN p.price
-    END ASC,
-    CASE
-        WHEN ? = 'price_desc' THEN p.price
-    END DESC,
-    CASE
-        WHEN ? = 'stock_asc' THEN p.stock_quantity
-    END ASC,
-    CASE
-        WHEN ? = 'stock_desc' THEN p.stock_quantity
+        WHEN ? = 'sold_desc' THEN IFNULL (SUM(oi.quantity), 0)
     END DESC,
     p.created_at DESC
 LIMIT
@@ -244,15 +234,15 @@ OFFSET
 `
 
 type ListProductsParams struct {
-	SearchName interface{}         `json:"search_name"`
-	CategoryID sql.NullString      `json:"category_id"`
-	MinPrice   decimal.NullDecimal `json:"min_price"`
-	MaxPrice   decimal.NullDecimal `json:"max_price"`
-	MinStock   sql.NullInt32       `json:"min_stock"`
-	MaxStock   sql.NullInt32       `json:"max_stock"`
-	OrderBy    interface{}         `json:"order_by"`
-	Limit      int32               `json:"limit"`
-	Offset     int32               `json:"offset"`
+	SearchName interface{}     `json:"search_name"`
+	CategoryID string          `json:"category_id"`
+	MinPrice   decimal.Decimal `json:"min_price"`
+	MaxPrice   decimal.Decimal `json:"max_price"`
+	MinStock   int32           `json:"min_stock"`
+	MaxStock   int32           `json:"max_stock"`
+	OrderBy    interface{}     `json:"order_by"`
+	Limit      int32           `json:"limit"`
+	Offset     int32           `json:"offset"`
 }
 
 type ListProductsRow struct {
@@ -265,6 +255,7 @@ type ListProductsRow struct {
 	CreatedAt     time.Time       `json:"created_at"`
 	CategoryID    string          `json:"category_id"`
 	CategoryName  string          `json:"category_name"`
+	TotalSold     int64           `json:"total_sold"`
 }
 
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error) {
@@ -274,16 +265,13 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 		arg.CategoryID,
 		arg.CategoryID,
 		arg.MinPrice,
+		arg.MinPrice,
+		arg.MaxPrice,
 		arg.MaxPrice,
 		arg.MinStock,
 		arg.MinStock,
 		arg.MaxStock,
 		arg.MaxStock,
-		arg.OrderBy,
-		arg.OrderBy,
-		arg.OrderBy,
-		arg.OrderBy,
-		arg.OrderBy,
 		arg.OrderBy,
 		arg.Limit,
 		arg.Offset,
@@ -305,6 +293,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 			&i.CreatedAt,
 			&i.CategoryID,
 			&i.CategoryName,
+			&i.TotalSold,
 		); err != nil {
 			return nil, err
 		}

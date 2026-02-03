@@ -37,7 +37,7 @@ func (s *service) Create(
 	params := dbgen.CreateCategoryParams{
 		ID:          id,
 		Name:        req.Name,
-		Description: helper.NewNullString(req.Description),
+		Description: helper.StringToNull(req.Description),
 	}
 
 	if err := s.repo.Create(ctx, params); err != nil {
@@ -48,7 +48,7 @@ func (s *service) Create(
 	return CategoryResponse{
 		ID:          id,
 		Name:        req.Name,
-		Description: helper.StringValue(req.Description),
+		Description: helper.StringPtrValue(req.Description),
 	}, nil
 }
 
@@ -89,7 +89,7 @@ func (s *service) Update(
 	if err := s.repo.Update(ctx, dbgen.UpdateCategoryParams{
 		ID:          id,
 		Name:        req.Name,
-		Description: helper.NewNullString(req.Description),
+		Description: helper.StringToNull(req.Description),
 	}); err != nil {
 		return CategoryResponse{}, err
 	}

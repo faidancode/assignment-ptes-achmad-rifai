@@ -84,6 +84,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getRecentProductsStmt, err = db.PrepareContext(ctx, getRecentProducts); err != nil {
 		return nil, fmt.Errorf("error preparing query GetRecentProducts: %w", err)
 	}
+	if q.getTopCustomersStmt, err = db.PrepareContext(ctx, getTopCustomers); err != nil {
+		return nil, fmt.Errorf("error preparing query GetTopCustomers: %w", err)
+	}
 	if q.listProductsStmt, err = db.PrepareContext(ctx, listProducts); err != nil {
 		return nil, fmt.Errorf("error preparing query ListProducts: %w", err)
 	}
@@ -201,6 +204,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getRecentProductsStmt: %w", cerr)
 		}
 	}
+	if q.getTopCustomersStmt != nil {
+		if cerr := q.getTopCustomersStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getTopCustomersStmt: %w", cerr)
+		}
+	}
 	if q.listProductsStmt != nil {
 		if cerr := q.listProductsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listProductsStmt: %w", cerr)
@@ -280,6 +288,7 @@ type Queries struct {
 	getProductByIDStmt            *sql.Stmt
 	getProductDashboardReportStmt *sql.Stmt
 	getRecentProductsStmt         *sql.Stmt
+	getTopCustomersStmt           *sql.Stmt
 	listProductsStmt              *sql.Stmt
 	updateCategoryStmt            *sql.Stmt
 	updateCustomerStmt            *sql.Stmt
@@ -310,6 +319,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getProductByIDStmt:            q.getProductByIDStmt,
 		getProductDashboardReportStmt: q.getProductDashboardReportStmt,
 		getRecentProductsStmt:         q.getRecentProductsStmt,
+		getTopCustomersStmt:           q.getTopCustomersStmt,
 		listProductsStmt:              q.listProductsStmt,
 		updateCategoryStmt:            q.updateCategoryStmt,
 		updateCustomerStmt:            q.updateCustomerStmt,

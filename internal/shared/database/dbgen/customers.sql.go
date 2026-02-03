@@ -8,11 +8,15 @@ package dbgen
 import (
 	"context"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 const createCustomer = `-- name: CreateCustomer :exec
-INSERT INTO customers (id, name, email, created_at)
-VALUES (?, ?, ?, ?)
+INSERT INTO
+    customers (id, name, email, created_at)
+VALUES
+    (?, ?, ?, ?)
 `
 
 type CreateCustomerParams struct {
@@ -33,8 +37,9 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 }
 
 const deleteCustomer = `-- name: DeleteCustomer :exec
-DELETE FROM customers 
-WHERE id = ?
+DELETE FROM customers
+WHERE
+    id = ?
 `
 
 func (q *Queries) DeleteCustomer(ctx context.Context, id string) error {
@@ -43,9 +48,17 @@ func (q *Queries) DeleteCustomer(ctx context.Context, id string) error {
 }
 
 const getCustomerByID = `-- name: GetCustomerByID :one
-SELECT id, name, email, created_at 
-FROM customers 
-WHERE id = ? LIMIT 1
+SELECT
+    id,
+    name,
+    email,
+    created_at
+FROM
+    customers
+WHERE
+    id = ?
+LIMIT
+    1
 `
 
 type GetCustomerByIDRow struct {
@@ -68,9 +81,15 @@ func (q *Queries) GetCustomerByID(ctx context.Context, id string) (GetCustomerBy
 }
 
 const getCustomers = `-- name: GetCustomers :many
-SELECT id, name, email, created_at 
-FROM customers 
-ORDER BY created_at DESC
+SELECT
+    id,
+    name,
+    email,
+    created_at
+FROM
+    customers
+ORDER BY
+    created_at DESC
 `
 
 type GetCustomersRow struct {
@@ -108,10 +127,68 @@ func (q *Queries) GetCustomers(ctx context.Context) ([]GetCustomersRow, error) {
 	return items, nil
 }
 
+const getTopCustomers = `-- name: GetTopCustomers :many
+SELECT
+    c.id,
+    c.name,
+    c.email,
+    CAST(SUM(o.total_price) AS DECIMAL(10, 2)) as total_spent,
+    COUNT(o.id) as total_orders
+FROM
+    customers c
+    JOIN orders o ON c.id = o.customer_id
+GROUP BY
+    c.id
+ORDER BY
+    total_spent DESC
+LIMIT
+    ?
+`
+
+type GetTopCustomersRow struct {
+	ID          string          `json:"id"`
+	Name        string          `json:"name"`
+	Email       string          `json:"email"`
+	TotalSpent  decimal.Decimal `json:"total_spent"`
+	TotalOrders int64           `json:"total_orders"`
+}
+
+func (q *Queries) GetTopCustomers(ctx context.Context, limit int32) ([]GetTopCustomersRow, error) {
+	rows, err := q.query(ctx, q.getTopCustomersStmt, getTopCustomers, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTopCustomersRow
+	for rows.Next() {
+		var i GetTopCustomersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.TotalSpent,
+			&i.TotalOrders,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateCustomer = `-- name: UpdateCustomer :exec
 UPDATE customers
-SET name = ?, email = ?
-WHERE id = ?
+SET
+    name = ?,
+    email = ?
+WHERE
+    id = ?
 `
 
 type UpdateCustomerParams struct {

@@ -180,7 +180,7 @@ func TestService_Update(t *testing.T) {
 			Return(dbgen.GetCategoryByIDRow{
 				ID:          id,
 				Name:        "Updated",
-				Description: helper.NewNullString(&desc),
+				Description: helper.StringToNull(&desc),
 			}, nil)
 
 		res, err := svc.Update(ctx, id, req)

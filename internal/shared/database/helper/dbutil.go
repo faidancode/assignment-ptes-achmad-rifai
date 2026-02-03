@@ -2,76 +2,159 @@ package helper
 
 import (
 	"database/sql"
+	"strconv"
 
 	"github.com/shopspring/decimal"
 )
 
-func strPtr(s string) *string {
-	return &s
+//
+// =======================
+// STRING
+// =======================
+//
+
+func StringValue(s string) string {
+	return s
 }
 
-// NewNullString membantu konversi *string -> sql.NullString
-func NewNullString(s *string) sql.NullString {
-	if s == nil {
-		return sql.NullString{}
-	}
-	return sql.NullString{
-		String: *s,
-		Valid:  true,
-	}
-}
-
-func StringValue(s *string) string {
+func StringPtrValue(s *string) string {
 	if s == nil {
 		return ""
 	}
 	return *s
 }
 
-// BoolValue mengonversi *bool ke bool dengan fallback nilai default jika nil.
-func BoolValue(b *bool, defaultValue bool) bool {
+func StringToNull(s *string) sql.NullString {
+	if s == nil {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: *s, Valid: true}
+}
+
+//
+// =======================
+// BOOL
+// =======================
+//
+
+func BoolValue(b bool) bool {
+	return b
+}
+
+func BoolPtrValue(b *bool, defaultValue bool) bool {
 	if b == nil {
 		return defaultValue
 	}
 	return *b
 }
 
-// NewNullBool membantu konversi *bool -> sql.NullBool untuk keperluan database
-func NewNullBool(b *bool) sql.NullBool {
+func BoolToNull(b *bool) sql.NullBool {
 	if b == nil {
 		return sql.NullBool{}
 	}
-	return sql.NullBool{
-		Bool:  *b,
-		Valid: true,
-	}
+	return sql.NullBool{Bool: *b, Valid: true}
 }
 
-// ToDecimal membantu konversi float64 ke decimal.Decimal untuk sqlc
-func ToDecimal(f float64) decimal.Decimal {
+//
+// =======================
+// INT32
+// =======================
+//
+
+func Int32Value(i int32) int32 {
+	return i
+}
+
+func Int32PtrValue(i *int32) int32 {
+	if i == nil {
+		return 0
+	}
+	return *i
+}
+
+func Int32ToNull(i *int32) sql.NullInt32 {
+	if i == nil {
+		return sql.NullInt32{}
+	}
+	return sql.NullInt32{Int32: *i, Valid: true}
+}
+
+//
+// =======================
+// FLOAT64
+// =======================
+//
+
+func Float64Value(f float64) float64 {
+	return f
+}
+
+func Float64PtrValue(f *float64) float64 {
+	if f == nil {
+		return 0
+	}
+	return *f
+}
+
+//
+// =======================
+// DECIMAL
+// =======================
+//
+
+func DecimalValue(d decimal.Decimal) decimal.Decimal {
+	return d
+}
+
+func DecimalPtrValue(d *decimal.Decimal) decimal.Decimal {
+	if d == nil {
+		return decimal.Zero
+	}
+	return *d
+}
+
+func Float64ToDecimal(f float64) decimal.Decimal {
 	return decimal.NewFromFloat(f)
 }
 
-// FloatFromDecimal membantu konversi balik dari database (decimal) ke response (float64)
-func FloatFromDecimal(d decimal.Decimal) float64 {
+func Float64PtrToDecimal(f *float64) decimal.Decimal {
+	if f == nil {
+		return decimal.Zero
+	}
+	return decimal.NewFromFloat(*f)
+}
+
+// Presisi tinggi (uang / harga)
+func Float64ToDecimalExact(f float64) decimal.Decimal {
+	return decimal.RequireFromString(
+		strconv.FormatFloat(f, 'f', -1, 64),
+	)
+}
+
+func Float64PtrToDecimalExact(f *float64) decimal.Decimal {
+	if f == nil {
+		return decimal.Zero
+	}
+	return Float64ToDecimalExact(*f)
+}
+
+func DecimalToFloat64(d decimal.Decimal) float64 {
 	f, _ := d.Float64()
 	return f
 }
 
-// NewNullDecimal menangani pemetaan harga (decimal) opsional
-func NewNullDecimal(f *float64) decimal.NullDecimal {
-	if f == nil {
-		return decimal.NullDecimal{Valid: false}
-	}
-	// Konversi float64 ke decimal.Decimal
-	d := decimal.NewFromFloat(*f)
-	return decimal.NullDecimal{Decimal: d, Valid: true}
-}
+//
+// =======================
+// DECIMAL → NULL
+// =======================
+//
 
-// NewNullInt32 menangani pemetaan stock (int32) opsional
-func NewNullInt32(i *int32) sql.NullInt32 {
-	if i == nil {
-		return sql.NullInt32{Valid: false}
+func Float64ToNullDecimal(f *float64) decimal.NullDecimal {
+	if f == nil {
+		return decimal.NullDecimal{}
 	}
-	return sql.NullInt32{Int32: *i, Valid: true}
+	return decimal.NullDecimal{
+		Decimal: decimal.NewFromFloat(*f),
+		Valid:   true,
+	}
 }

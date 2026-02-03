@@ -25,6 +25,7 @@ type ProductResponse struct {
 	Price         float64 `json:"price"`
 	StockQuantity int     `json:"stock_quantity"`
 	IsActive      bool    `json:"is_active"`
+	TotalSold     int     `json:"total_sold"`
 
 	Category CategoryResponse `json:"category"`
 }

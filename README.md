@@ -1,4 +1,4 @@
-# Go Product Dashboard API 🚀
+# Go Product Dashboard API 
 
 Project ini adalah implementasi sistem manajemen produk dan dashboard statistik menggunakan **Golang** dengan fokus pada performa tinggi melalui **Redis Caching** dan **SQL Aggregation**.
 
@@ -19,6 +19,7 @@ Project ini mengimplementasikan teknik **Cache-Aside** pada endpoint Dashboard.
 ## Quick Start
 
 ### Setup Environment
+1. Setup Environment
 Salin file `.env.example` menjadi `.env` dan sesuaikan kredensialnya.
 ```bash
 cp .env.example .env

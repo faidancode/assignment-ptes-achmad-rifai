@@ -78,6 +78,14 @@ docker-up:
 docker-down:
 	docker-compose down
 
+.PHONY: docker-infra
+docker-infra:
+	docker-compose up -d mysql redis
+
+.PHONY: docker-infra-stop
+docker-infra-stop:
+	docker-compose stop mysql redis	
+
 .PHONY: docker-logs
 docker-logs:
 	docker-compose logs -f
@@ -122,7 +130,7 @@ run:
 # =========================
 .PHONY: seed
 seed:
-	@echo "Menjalankan seeder produk..."
+	@echo "Menjalankan seeder..."
 	$(GO) run internal/shared/database/seed/main.go
 
 .PHONY: load-test

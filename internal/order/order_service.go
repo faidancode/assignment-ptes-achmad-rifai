@@ -54,7 +54,7 @@ func (s *service) Create(ctx context.Context, req CreateOrderRequest) (OrderResp
 		ID:            orderID,
 		CustomerID:    req.CustomerID,
 		TotalQuantity: int32(totalQty),
-		TotalPrice:    helper.ToDecimal(totalPrice),
+		TotalPrice:    helper.Float64ToDecimal(totalPrice),
 		CreatedAt:     now,
 	}
 
@@ -70,7 +70,7 @@ func (s *service) Create(ctx context.Context, req CreateOrderRequest) (OrderResp
 			OrderID:   orderID,
 			ProductID: item.ProductID,
 			Quantity:  int32(item.Quantity),
-			UnitPrice: helper.ToDecimal(item.UnitPrice),
+			UnitPrice: helper.Float64ToDecimal(item.UnitPrice),
 		}
 
 		if err := txRepo.CreateOrderItem(ctx, itemParams); err != nil {
@@ -108,7 +108,7 @@ func (s *service) List(ctx context.Context) ([]OrderResponse, error) {
 			ID:            row.ID,
 			CustomerID:    row.CustomerID,
 			TotalQuantity: int(row.TotalQuantity),
-			TotalPrice:    helper.FloatFromDecimal(row.TotalPrice),
+			TotalPrice:    helper.DecimalToFloat64(row.TotalPrice),
 			CreatedAt:     row.CreatedAt,
 		})
 	}
@@ -129,7 +129,7 @@ func (s *service) GetByID(ctx context.Context, id string) (OrderResponse, error)
 	itemResponses := make([]OrderItemResponse, 0)
 	for _, item := range items {
 		itemResponses = append(itemResponses, OrderItemResponse{
-			ID: item.ID, ProductID: item.ProductID, Quantity: int(item.Quantity), UnitPrice: helper.FloatFromDecimal(item.UnitPrice),
+			ID: item.ID, ProductID: item.ProductID, Quantity: int(item.Quantity), UnitPrice: helper.DecimalToFloat64(item.UnitPrice),
 		})
 	}
 
@@ -137,7 +137,7 @@ func (s *service) GetByID(ctx context.Context, id string) (OrderResponse, error)
 		ID:            row.ID,
 		CustomerID:    row.CustomerID,
 		TotalQuantity: int(row.TotalQuantity),
-		TotalPrice:    helper.FloatFromDecimal(row.TotalPrice),
+		TotalPrice:    helper.DecimalToFloat64(row.TotalPrice),
 		CreatedAt:     row.CreatedAt,
 		Items:         itemResponses,
 	}, nil

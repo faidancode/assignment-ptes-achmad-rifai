@@ -1,0 +1,26 @@
+package dashboard
+
+import (
+	"assignment-ptes-achmad-rifai/internal/pkg/response"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+type Handler struct {
+	service Service
+}
+
+func NewHandler(service Service) *Handler {
+	return &Handler{service: service}
+}
+
+func (h *Handler) GetProductReport(c *gin.Context) {
+	res, err := h.service.GetProductDashboard(c.Request.Context())
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "DASHBOARD_ERROR", "Failed to fetch dashboard data", err.Error())
+		return
+	}
+
+	response.Success(c, http.StatusOK, res, nil)
+}

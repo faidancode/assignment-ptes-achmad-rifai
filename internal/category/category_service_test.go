@@ -177,7 +177,7 @@ func TestService_Update(t *testing.T) {
 		// Expect GetByID (dipanggil setelah Update)
 		repo.EXPECT().
 			GetByID(gomock.Any(), id).
-			Return(dbgen.Category{
+			Return(dbgen.GetCategoryByIDRow{
 				ID:          id,
 				Name:        "Updated",
 				Description: helper.NewNullString(&desc),
@@ -223,7 +223,7 @@ func TestService_Update(t *testing.T) {
 
 		repo.EXPECT().
 			GetByID(gomock.Any(), id).
-			Return(dbgen.Category{}, category.ErrCategoryNotFound)
+			Return(dbgen.GetCategoryByIDRow{}, category.ErrCategoryNotFound)
 
 		_, err := svc.Update(ctx, id, req)
 

@@ -5,6 +5,7 @@ import (
 	"assignment-ptes-achmad-rifai/internal/bootstrap"
 	"assignment-ptes-achmad-rifai/internal/category"
 	"assignment-ptes-achmad-rifai/internal/customer"
+	"assignment-ptes-achmad-rifai/internal/dashboard"
 	"assignment-ptes-achmad-rifai/internal/order"
 	"assignment-ptes-achmad-rifai/internal/product"
 	"assignment-ptes-achmad-rifai/internal/shared/database/dbgen"
@@ -16,14 +17,16 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql" // Driver diganti ke MySQL
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 )
 
 // ControllerRegistry untuk mengelompokkan handler
 type ControllerRegistry struct {
-	Category *category.Handler
-	Product  *product.Handler
-	Customer *customer.Handler
-	Order    *order.Handler
+	Category  *category.Handler
+	Product   *product.Handler
+	Customer  *customer.Handler
+	Order     *order.Handler
+	Dashboard *dashboard.Handler
 }
 
 func main() {
@@ -43,6 +46,12 @@ func main() {
 
 	queries := dbgen.New(db)
 
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_URL"),
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
 	// Dependency Injection (DI)
 
 	categoryRepo := category.NewRepository(queries)
@@ -61,11 +70,16 @@ func main() {
 	orderService := order.NewService(db, orderRepo)
 	orderHandler := order.NewHandler(orderService)
 
+	dashboardRepo := dashboard.NewRepository(queries)
+	dashboardService := dashboard.NewService(dashboardRepo, rdb)
+	dashboardHandler := dashboard.NewHandler(dashboardService)
+
 	registry := ControllerRegistry{
-		Category: categoryHandler,
-		Product:  productHandler,
-		Customer: customerHandler,
-		Order:    orderHandler,
+		Category:  categoryHandler,
+		Product:   productHandler,
+		Customer:  customerHandler,
+		Order:     orderHandler,
+		Dashboard: dashboardHandler,
 	}
 
 	// Router Setup
@@ -78,6 +92,7 @@ func main() {
 		product.RegisterRoutes(api, registry.Product)
 		customer.RegisterRoutes(api, registry.Customer)
 		order.RegisterRoutes(api, registry.Order)
+		dashboard.RegisterRoutes(api, registry.Dashboard)
 	}
 
 	// Audit logger & Server Config

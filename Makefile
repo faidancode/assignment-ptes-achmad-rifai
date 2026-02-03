@@ -47,6 +47,7 @@ migrate-create:
 .PHONY: migrate-up
 migrate-up:
 	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_MIGRATION_URL)' up
+	$(MAKE) sqlc
 
 .PHONY: migrate-down
 migrate-down:
@@ -65,6 +66,26 @@ migrate-status:
 migrate-fix:
 	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_MIGRATION_URL)' force $(version)
 	$(MIGRATE) -path $(MIGRATIONS_PATH) -database '$(DB_MIGRATION_URL)' up
+
+# =========================
+# DOCKER
+# =========================
+.PHONY: docker-up
+docker-up:
+	docker-compose up -d --build
+
+.PHONY: docker-down
+docker-down:
+	docker-compose down
+
+.PHONY: docker-logs
+docker-logs:
+	docker-compose logs -f
+
+# Menjalankan migrasi di dalam docker
+.PHONY: docker-migrate
+docker-migrate:
+	docker-compose run --rm migrator
 
 # =========================
 # DATABASE (DEV ONLY)
@@ -95,3 +116,25 @@ test:
 .PHONY: run
 run:
 	$(GO) run ./cmd/api
+
+# =========================
+# SEEDER / LOAD TEST
+# =========================
+.PHONY: seed
+seed:
+	@echo "Menjalankan seeder produk..."
+	$(GO) run internal/shared/database/seed/main.go
+
+.PHONY: load-test
+load-test:
+	@echo "=== Testing Performa Dashboard ==="
+	@echo "Request 1 (Ambil dari Database):"
+	time curl -s http://localhost:3000/api/v1/dashboard/products > /dev/null
+	@echo "\nRequest 2 (Ambil dari Redis Cache):"
+	time curl -s http://localhost:3000/api/v1/dashboard/products > /dev/null
+
+.PHONY: reset-seed
+reset-seed:
+	@echo "Membersihkan data lama dan mengisi ulang..."
+	mysql -u$(DB_USER) -p$(DB_PASSWORD) -e "DELETE FROM products; DELETE FROM categories;" $(DB_NAME)
+	$(MAKE) seed	

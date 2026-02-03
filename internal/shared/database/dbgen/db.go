@@ -78,6 +78,12 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getProductByIDStmt, err = db.PrepareContext(ctx, getProductByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetProductByID: %w", err)
 	}
+	if q.getProductDashboardReportStmt, err = db.PrepareContext(ctx, getProductDashboardReport); err != nil {
+		return nil, fmt.Errorf("error preparing query GetProductDashboardReport: %w", err)
+	}
+	if q.getRecentProductsStmt, err = db.PrepareContext(ctx, getRecentProducts); err != nil {
+		return nil, fmt.Errorf("error preparing query GetRecentProducts: %w", err)
+	}
 	if q.listProductsStmt, err = db.PrepareContext(ctx, listProducts); err != nil {
 		return nil, fmt.Errorf("error preparing query ListProducts: %w", err)
 	}
@@ -185,6 +191,16 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getProductByIDStmt: %w", cerr)
 		}
 	}
+	if q.getProductDashboardReportStmt != nil {
+		if cerr := q.getProductDashboardReportStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getProductDashboardReportStmt: %w", cerr)
+		}
+	}
+	if q.getRecentProductsStmt != nil {
+		if cerr := q.getRecentProductsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getRecentProductsStmt: %w", cerr)
+		}
+	}
 	if q.listProductsStmt != nil {
 		if cerr := q.listProductsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listProductsStmt: %w", cerr)
@@ -242,57 +258,61 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                         DBTX
-	tx                         *sql.Tx
-	countProductsStmt          *sql.Stmt
-	createCategoryStmt         *sql.Stmt
-	createCustomerStmt         *sql.Stmt
-	createOrderStmt            *sql.Stmt
-	createOrderItemStmt        *sql.Stmt
-	createProductStmt          *sql.Stmt
-	deleteCategoryStmt         *sql.Stmt
-	deleteCustomerStmt         *sql.Stmt
-	deleteOrderStmt            *sql.Stmt
-	deleteProductStmt          *sql.Stmt
-	getCategoriesStmt          *sql.Stmt
-	getCategoryByIDStmt        *sql.Stmt
-	getCustomerByIDStmt        *sql.Stmt
-	getCustomersStmt           *sql.Stmt
-	getOrderByIDStmt           *sql.Stmt
-	getOrderItemsByOrderIDStmt *sql.Stmt
-	getOrdersStmt              *sql.Stmt
-	getProductByIDStmt         *sql.Stmt
-	listProductsStmt           *sql.Stmt
-	updateCategoryStmt         *sql.Stmt
-	updateCustomerStmt         *sql.Stmt
-	updateProductStmt          *sql.Stmt
+	db                            DBTX
+	tx                            *sql.Tx
+	countProductsStmt             *sql.Stmt
+	createCategoryStmt            *sql.Stmt
+	createCustomerStmt            *sql.Stmt
+	createOrderStmt               *sql.Stmt
+	createOrderItemStmt           *sql.Stmt
+	createProductStmt             *sql.Stmt
+	deleteCategoryStmt            *sql.Stmt
+	deleteCustomerStmt            *sql.Stmt
+	deleteOrderStmt               *sql.Stmt
+	deleteProductStmt             *sql.Stmt
+	getCategoriesStmt             *sql.Stmt
+	getCategoryByIDStmt           *sql.Stmt
+	getCustomerByIDStmt           *sql.Stmt
+	getCustomersStmt              *sql.Stmt
+	getOrderByIDStmt              *sql.Stmt
+	getOrderItemsByOrderIDStmt    *sql.Stmt
+	getOrdersStmt                 *sql.Stmt
+	getProductByIDStmt            *sql.Stmt
+	getProductDashboardReportStmt *sql.Stmt
+	getRecentProductsStmt         *sql.Stmt
+	listProductsStmt              *sql.Stmt
+	updateCategoryStmt            *sql.Stmt
+	updateCustomerStmt            *sql.Stmt
+	updateProductStmt             *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                         tx,
-		tx:                         tx,
-		countProductsStmt:          q.countProductsStmt,
-		createCategoryStmt:         q.createCategoryStmt,
-		createCustomerStmt:         q.createCustomerStmt,
-		createOrderStmt:            q.createOrderStmt,
-		createOrderItemStmt:        q.createOrderItemStmt,
-		createProductStmt:          q.createProductStmt,
-		deleteCategoryStmt:         q.deleteCategoryStmt,
-		deleteCustomerStmt:         q.deleteCustomerStmt,
-		deleteOrderStmt:            q.deleteOrderStmt,
-		deleteProductStmt:          q.deleteProductStmt,
-		getCategoriesStmt:          q.getCategoriesStmt,
-		getCategoryByIDStmt:        q.getCategoryByIDStmt,
-		getCustomerByIDStmt:        q.getCustomerByIDStmt,
-		getCustomersStmt:           q.getCustomersStmt,
-		getOrderByIDStmt:           q.getOrderByIDStmt,
-		getOrderItemsByOrderIDStmt: q.getOrderItemsByOrderIDStmt,
-		getOrdersStmt:              q.getOrdersStmt,
-		getProductByIDStmt:         q.getProductByIDStmt,
-		listProductsStmt:           q.listProductsStmt,
-		updateCategoryStmt:         q.updateCategoryStmt,
-		updateCustomerStmt:         q.updateCustomerStmt,
-		updateProductStmt:          q.updateProductStmt,
+		db:                            tx,
+		tx:                            tx,
+		countProductsStmt:             q.countProductsStmt,
+		createCategoryStmt:            q.createCategoryStmt,
+		createCustomerStmt:            q.createCustomerStmt,
+		createOrderStmt:               q.createOrderStmt,
+		createOrderItemStmt:           q.createOrderItemStmt,
+		createProductStmt:             q.createProductStmt,
+		deleteCategoryStmt:            q.deleteCategoryStmt,
+		deleteCustomerStmt:            q.deleteCustomerStmt,
+		deleteOrderStmt:               q.deleteOrderStmt,
+		deleteProductStmt:             q.deleteProductStmt,
+		getCategoriesStmt:             q.getCategoriesStmt,
+		getCategoryByIDStmt:           q.getCategoryByIDStmt,
+		getCustomerByIDStmt:           q.getCustomerByIDStmt,
+		getCustomersStmt:              q.getCustomersStmt,
+		getOrderByIDStmt:              q.getOrderByIDStmt,
+		getOrderItemsByOrderIDStmt:    q.getOrderItemsByOrderIDStmt,
+		getOrdersStmt:                 q.getOrdersStmt,
+		getProductByIDStmt:            q.getProductByIDStmt,
+		getProductDashboardReportStmt: q.getProductDashboardReportStmt,
+		getRecentProductsStmt:         q.getRecentProductsStmt,
+		listProductsStmt:              q.listProductsStmt,
+		updateCategoryStmt:            q.updateCategoryStmt,
+		updateCustomerStmt:            q.updateCustomerStmt,
+		updateProductStmt:             q.updateProductStmt,
 	}
 }

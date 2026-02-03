@@ -28,6 +28,22 @@ type Customer struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type Order struct {
+	ID            string          `json:"id"`
+	CustomerID    string          `json:"customer_id"`
+	TotalQuantity int32           `json:"total_quantity"`
+	TotalPrice    decimal.Decimal `json:"total_price"`
+	CreatedAt     time.Time       `json:"created_at"`
+}
+
+type OrderItem struct {
+	ID        string          `json:"id"`
+	OrderID   string          `json:"order_id"`
+	ProductID string          `json:"product_id"`
+	Quantity  int32           `json:"quantity"`
+	UnitPrice decimal.Decimal `json:"unit_price"`
+}
+
 type Product struct {
 	ID            string          `json:"id"`
 	Name          string          `json:"name"`

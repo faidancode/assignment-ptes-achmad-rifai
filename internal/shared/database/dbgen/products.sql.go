@@ -46,12 +46,12 @@ WHERE
 `
 
 type CountProductsParams struct {
-	SearchName interface{}    `json:"search_name"`
-	CategoryID sql.NullString `json:"category_id"`
-	MinPrice   sql.NullString `json:"min_price"`
-	MaxPrice   sql.NullString `json:"max_price"`
-	MinStock   sql.NullInt32  `json:"min_stock"`
-	MaxStock   sql.NullInt32  `json:"max_stock"`
+	SearchName interface{}         `json:"search_name"`
+	CategoryID sql.NullString      `json:"category_id"`
+	MinPrice   decimal.NullDecimal `json:"min_price"`
+	MaxPrice   decimal.NullDecimal `json:"max_price"`
+	MinStock   sql.NullInt32       `json:"min_stock"`
+	MaxStock   sql.NullInt32       `json:"max_stock"`
 }
 
 func (q *Queries) CountProducts(ctx context.Context, arg CountProductsParams) (int64, error) {
@@ -193,7 +193,6 @@ FROM
     products p
     JOIN categories c ON c.id = p.category_id
 WHERE
-    -- Gunakan @search_name untuk menggantikan ? 
     (
         ? IS NULL
         OR p.name LIKE CONCAT ('%', ?, '%')
@@ -202,13 +201,13 @@ WHERE
         ? IS NULL
         OR p.category_id = ?
     )
-    AND (
-        ? IS NULL
-        OR p.price >= ?
+    AND p.price >= IFNULL (
+        CAST(? AS DECIMAL(10, 2)),
+        0
     )
-    AND (
-        ? IS NULL
-        OR p.price <= ?
+    AND p.price <= IFNULL (
+        CAST(? AS DECIMAL(10, 2)),
+        999999999.99
     )
     AND (
         ? IS NULL
@@ -245,15 +244,15 @@ OFFSET
 `
 
 type ListProductsParams struct {
-	SearchName interface{}    `json:"search_name"`
-	CategoryID sql.NullString `json:"category_id"`
-	MinPrice   sql.NullString `json:"min_price"`
-	MaxPrice   sql.NullString `json:"max_price"`
-	MinStock   sql.NullInt32  `json:"min_stock"`
-	MaxStock   sql.NullInt32  `json:"max_stock"`
-	OrderBy    interface{}    `json:"order_by"`
-	Limit      int32          `json:"limit"`
-	Offset     int32          `json:"offset"`
+	SearchName interface{}         `json:"search_name"`
+	CategoryID sql.NullString      `json:"category_id"`
+	MinPrice   decimal.NullDecimal `json:"min_price"`
+	MaxPrice   decimal.NullDecimal `json:"max_price"`
+	MinStock   sql.NullInt32       `json:"min_stock"`
+	MaxStock   sql.NullInt32       `json:"max_stock"`
+	OrderBy    interface{}         `json:"order_by"`
+	Limit      int32               `json:"limit"`
+	Offset     int32               `json:"offset"`
 }
 
 type ListProductsRow struct {
@@ -275,8 +274,6 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 		arg.CategoryID,
 		arg.CategoryID,
 		arg.MinPrice,
-		arg.MinPrice,
-		arg.MaxPrice,
 		arg.MaxPrice,
 		arg.MinStock,
 		arg.MinStock,

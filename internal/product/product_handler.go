@@ -37,9 +37,32 @@ func (h *Handler) GetAll(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
 
+	// Tangkap filter dari query params
+	name := c.Query("name")
+	categoryID := c.Query("category_id")
+	minPriceStr := c.Query("min_price")
+	maxPriceStr := c.Query("max_price")
+	sortBy := c.DefaultQuery("sort", "name_asc") // Default sort
+
 	params := ListParams{
 		Page:     page,
 		PageSize: pageSize,
+		Sort:     &sortBy,
+	}
+
+	// Mapping string ke tipe data yang sesuai (pointer)
+	if name != "" {
+		params.Name = &name
+	}
+	if categoryID != "" {
+		params.Category = &categoryID
+	}
+
+	if minPrice, err := strconv.ParseFloat(minPriceStr, 64); err == nil {
+		params.MinPrice = &minPrice
+	}
+	if maxPrice, err := strconv.ParseFloat(maxPriceStr, 64); err == nil {
+		params.MaxPrice = &maxPrice
 	}
 
 	data, total, err := h.service.List(c.Request.Context(), params)

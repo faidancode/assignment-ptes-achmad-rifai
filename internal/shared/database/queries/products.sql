@@ -48,7 +48,6 @@ FROM
     products p
     JOIN categories c ON c.id = p.category_id
 WHERE
-    -- Gunakan @search_name untuk menggantikan ? 
     (
         sqlc.narg ('search_name') IS NULL
         OR p.name LIKE CONCAT ('%', sqlc.narg ('search_name'), '%')
@@ -57,13 +56,13 @@ WHERE
         sqlc.narg ('category_id') IS NULL
         OR p.category_id = sqlc.narg ('category_id')
     )
-    AND (
-        sqlc.narg ('min_price') IS NULL
-        OR p.price >= sqlc.narg ('min_price')
+    AND p.price >= IFNULL (
+        CAST(sqlc.narg ('min_price') AS DECIMAL(10, 2)),
+        0
     )
-    AND (
-        sqlc.narg ('max_price') IS NULL
-        OR p.price <= sqlc.narg ('max_price')
+    AND p.price <= IFNULL (
+        CAST(sqlc.narg ('max_price') AS DECIMAL(10, 2)),
+        999999999.99
     )
     AND (
         sqlc.narg ('min_stock') IS NULL

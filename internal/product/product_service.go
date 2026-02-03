@@ -20,7 +20,11 @@ type ListParams struct {
 	PageSize int
 	Name     *string
 	Category *string
-	Sort     *string
+	MinPrice *float64 // Tambahkan ini
+	MaxPrice *float64 // Tambahkan ini
+	MinStock *int32   // Tambahkan ini
+	MaxStock *int32   // Tambahkan ini
+	Sort     *string  // Ini untuk order_by
 }
 type service struct {
 	repo Repository
@@ -66,9 +70,15 @@ func (s *service) List(
 	limit := int32(p.PageSize)
 	offset := int32((p.Page - 1) * p.PageSize)
 
+	// 1. Tambahkan semua field filter ke dalam ListProductsParams
 	rows, err := s.repo.List(ctx, dbgen.ListProductsParams{
 		SearchName: helper.NewNullString(p.Name),
 		CategoryID: helper.NewNullString(p.Category),
+		MinPrice:   helper.NewNullDecimal(p.MinPrice),
+		MaxPrice:   helper.NewNullDecimal(p.MaxPrice),
+		MinStock:   helper.NewNullInt32(p.MinStock),
+		MaxStock:   helper.NewNullInt32(p.MaxStock),
+		OrderBy:    helper.StringValue(p.Sort),
 		Limit:      limit,
 		Offset:     offset,
 	})
@@ -76,9 +86,15 @@ func (s *service) List(
 		return nil, 0, err
 	}
 
+	// 2. Penting: Count juga harus menerima filter yang sama
+	// agar jumlah total data sinkron dengan filter yang aktif
 	total, err := s.repo.Count(ctx, dbgen.CountProductsParams{
 		SearchName: helper.NewNullString(p.Name),
 		CategoryID: helper.NewNullString(p.Category),
+		MinPrice:   helper.NewNullDecimal(p.MinPrice),
+		MaxPrice:   helper.NewNullDecimal(p.MaxPrice),
+		MinStock:   helper.NewNullInt32(p.MinStock),
+		MaxStock:   helper.NewNullInt32(p.MaxStock),
 	})
 	if err != nil {
 		return nil, 0, err

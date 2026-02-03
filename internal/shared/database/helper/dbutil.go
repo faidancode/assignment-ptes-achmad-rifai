@@ -57,3 +57,21 @@ func FloatFromDecimal(d decimal.Decimal) float64 {
 	f, _ := d.Float64()
 	return f
 }
+
+// NewNullDecimal menangani pemetaan harga (decimal) opsional
+func NewNullDecimal(f *float64) decimal.NullDecimal {
+	if f == nil {
+		return decimal.NullDecimal{Valid: false}
+	}
+	// Konversi float64 ke decimal.Decimal
+	d := decimal.NewFromFloat(*f)
+	return decimal.NullDecimal{Decimal: d, Valid: true}
+}
+
+// NewNullInt32 menangani pemetaan stock (int32) opsional
+func NewNullInt32(i *int32) sql.NullInt32 {
+	if i == nil {
+		return sql.NullInt32{Valid: false}
+	}
+	return sql.NullInt32{Int32: *i, Valid: true}
+}

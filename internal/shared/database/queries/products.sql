@@ -44,6 +44,7 @@ SELECT
     p.created_at,
     c.id AS category_id,
     c.name AS category_name,
+    c.description AS category_description,
     CAST(IFNULL (SUM(oi.quantity), 0) AS UNSIGNED) AS total_sold
 FROM
     products p

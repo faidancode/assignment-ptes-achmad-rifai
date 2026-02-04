@@ -8,5 +8,6 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler) {
 	{
 		dashboardGroup.GET("/products", h.GetProductReport)
 		dashboardGroup.GET("/top-customers", h.GetTopCustomers)
+		dashboardGroup.GET("/overview", h.GetFullDashboard)
 	}
 }

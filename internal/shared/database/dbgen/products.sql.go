@@ -189,6 +189,7 @@ SELECT
     p.created_at,
     c.id AS category_id,
     c.name AS category_name,
+    c.description AS category_description,
     CAST(IFNULL (SUM(oi.quantity), 0) AS UNSIGNED) AS total_sold
 FROM
     products p
@@ -246,16 +247,17 @@ type ListProductsParams struct {
 }
 
 type ListProductsRow struct {
-	ID            string          `json:"id"`
-	Name          string          `json:"name"`
-	Description   sql.NullString  `json:"description"`
-	Price         decimal.Decimal `json:"price"`
-	StockQuantity int32           `json:"stock_quantity"`
-	IsActive      bool            `json:"is_active"`
-	CreatedAt     time.Time       `json:"created_at"`
-	CategoryID    string          `json:"category_id"`
-	CategoryName  string          `json:"category_name"`
-	TotalSold     int64           `json:"total_sold"`
+	ID                  string          `json:"id"`
+	Name                string          `json:"name"`
+	Description         sql.NullString  `json:"description"`
+	Price               decimal.Decimal `json:"price"`
+	StockQuantity       int32           `json:"stock_quantity"`
+	IsActive            bool            `json:"is_active"`
+	CreatedAt           time.Time       `json:"created_at"`
+	CategoryID          string          `json:"category_id"`
+	CategoryName        string          `json:"category_name"`
+	CategoryDescription sql.NullString  `json:"category_description"`
+	TotalSold           int64           `json:"total_sold"`
 }
 
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error) {
@@ -293,6 +295,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 			&i.CreatedAt,
 			&i.CategoryID,
 			&i.CategoryName,
+			&i.CategoryDescription,
 			&i.TotalSold,
 		); err != nil {
 			return nil, err

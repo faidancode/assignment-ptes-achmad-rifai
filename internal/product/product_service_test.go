@@ -3,6 +3,7 @@
 package product_test
 
 import (
+	"assignment-ptes-achmad-rifai/internal/dashboard"
 	"assignment-ptes-achmad-rifai/internal/product"
 	"assignment-ptes-achmad-rifai/internal/shared/database/dbgen"
 	"context"
@@ -12,16 +13,25 @@ import (
 
 	mockProduct "assignment-ptes-achmad-rifai/internal/product/mocks"
 
+	"github.com/go-redis/redismock/v9"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
-func setupServiceTest(t *testing.T) (product.Service, *mockProduct.MockRepository) {
+func setupServiceTest(t *testing.T) (product.Service, *mockProduct.MockRepository, redismock.ClientMock) {
 	ctrl := gomock.NewController(t)
 	t.Cleanup(ctrl.Finish)
+
+	// Mock Redis
+	dbRedis, redisMock := redismock.NewClientMock()
+
+	// Mock Repo
 	repo := mockProduct.NewMockRepository(ctrl)
-	svc := product.NewService(repo)
-	return svc, repo
+
+	// Create Service
+	svc := product.NewService(repo, dbRedis)
+
+	return svc, repo, redisMock
 }
 
 func TestService_Create(t *testing.T) {
@@ -32,10 +42,12 @@ func TestService_Create(t *testing.T) {
 	}
 
 	t.Run("success", func(t *testing.T) {
-		svc, repo := setupServiceTest(t)
+		svc, repo, redisMock := setupServiceTest(t)
 		repo.EXPECT().
 			Create(gomock.Any(), gomock.Any()).
 			Return(nil)
+
+		redisMock.ExpectDel(dashboard.ProductReportKey).SetVal(1)
 
 		res, err := svc.Create(ctx, req)
 		assert.NoError(t, err)
@@ -43,7 +55,7 @@ func TestService_Create(t *testing.T) {
 	})
 
 	t.Run("error database", func(t *testing.T) {
-		svc, repo := setupServiceTest(t)
+		svc, repo, _ := setupServiceTest(t)
 		repo.EXPECT().
 			Create(gomock.Any(), gomock.Any()).
 			Return(errors.New("db error"))
@@ -58,7 +70,7 @@ func TestService_List(t *testing.T) {
 	p := product.ListParams{Page: 1, PageSize: 10}
 
 	t.Run("success", func(t *testing.T) {
-		svc, repo := setupServiceTest(t)
+		svc, repo, _ := setupServiceTest(t)
 		repo.EXPECT().List(gomock.Any(), gomock.Any()).Return([]dbgen.ListProductsRow{{ID: "1", Name: "P1"}}, nil)
 		repo.EXPECT().Count(gomock.Any(), gomock.Any()).Return(int64(1), nil)
 
@@ -69,7 +81,7 @@ func TestService_List(t *testing.T) {
 	})
 
 	t.Run("error count", func(t *testing.T) {
-		svc, repo := setupServiceTest(t)
+		svc, repo, _ := setupServiceTest(t)
 		repo.EXPECT().List(gomock.Any(), gomock.Any()).Return([]dbgen.ListProductsRow{}, nil)
 		repo.EXPECT().Count(gomock.Any(), gomock.Any()).Return(int64(0), errors.New("count failed"))
 
@@ -83,7 +95,7 @@ func TestService_GetByID(t *testing.T) {
 	id := "uuid-1"
 
 	t.Run("success", func(t *testing.T) {
-		svc, repo := setupServiceTest(t)
+		svc, repo, _ := setupServiceTest(t)
 		repo.EXPECT().GetByID(ctx, id).Return(dbgen.GetProductByIDRow{ID: id, Name: "P1"}, nil)
 
 		res, err := svc.GetByID(ctx, id)
@@ -92,7 +104,7 @@ func TestService_GetByID(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		svc, repo := setupServiceTest(t)
+		svc, repo, _ := setupServiceTest(t)
 		repo.EXPECT().GetByID(ctx, id).Return(dbgen.GetProductByIDRow{}, sql.ErrNoRows)
 
 		_, err := svc.GetByID(ctx, id)
@@ -106,17 +118,17 @@ func TestService_Update(t *testing.T) {
 	req := product.UpdateProductRequest{Name: "New Name"}
 
 	t.Run("success", func(t *testing.T) {
-		svc, repo := setupServiceTest(t)
+		svc, repo, redisMock := setupServiceTest(t)
 		repo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(nil)
 		repo.EXPECT().GetByID(gomock.Any(), id).Return(dbgen.GetProductByIDRow{ID: id, Name: "New Name"}, nil)
-
+		redisMock.ExpectDel(dashboard.ProductReportKey).SetVal(1)
 		res, err := svc.Update(ctx, id, req)
 		assert.NoError(t, err)
 		assert.Equal(t, "New Name", res.Name)
 	})
 
 	t.Run("not found after update", func(t *testing.T) {
-		svc, repo := setupServiceTest(t)
+		svc, repo, _ := setupServiceTest(t)
 		repo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(nil)
 		repo.EXPECT().GetByID(gomock.Any(), id).Return(dbgen.GetProductByIDRow{}, sql.ErrNoRows)
 
@@ -130,7 +142,7 @@ func TestService_Delete(t *testing.T) {
 	id := "uuid-1"
 
 	t.Run("success", func(t *testing.T) {
-		svc, repo := setupServiceTest(t)
+		svc, repo, _ := setupServiceTest(t)
 		repo.EXPECT().Delete(ctx, id).Return(nil)
 
 		err := svc.Delete(ctx, id)
@@ -138,7 +150,7 @@ func TestService_Delete(t *testing.T) {
 	})
 
 	t.Run("failed delete", func(t *testing.T) {
-		svc, repo := setupServiceTest(t)
+		svc, repo, _ := setupServiceTest(t)
 		repo.EXPECT().Delete(ctx, id).Return(errors.New("constraint error"))
 
 		err := svc.Delete(ctx, id)

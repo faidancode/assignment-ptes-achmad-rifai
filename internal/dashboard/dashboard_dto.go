@@ -27,3 +27,9 @@ type TopCustomerResponse struct {
 	TotalSpent  float64 `json:"total_spent"`
 	TotalOrders int64   `json:"total_orders"`
 }
+
+type DashboardReportResponse struct {
+	ProductReport ProductReportResponse `json:"product_report"`
+	TopCustomers  []TopCustomerResponse `json:"top_customers"`
+	TotalTimeMs   int64                 `json:"total_time_ms"`
+}

@@ -59,7 +59,7 @@ func main() {
 	categoryHandler := category.NewHandler(categoryService)
 
 	productRepo := product.NewRepository(queries)
-	productService := product.NewService(productRepo)
+	productService := product.NewService(productRepo, rdb)
 	productHandler := product.NewHandler(productService)
 
 	customerRepo := customer.NewRepository(queries)

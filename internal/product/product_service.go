@@ -1,11 +1,14 @@
 package product
 
 import (
+	"assignment-ptes-achmad-rifai/internal/dashboard"
 	"assignment-ptes-achmad-rifai/internal/shared/database/dbgen"
 	"assignment-ptes-achmad-rifai/internal/shared/database/helper"
 	"context"
 	"database/sql"
-	"fmt"
+	"log"
+
+	"github.com/redis/go-redis/v9"
 )
 
 //go:generate mockgen -source=product_service.go -destination=mocks/product_service_mock.go -package=mock
@@ -29,10 +32,11 @@ type ListParams struct {
 }
 type service struct {
 	repo Repository
+	rdb  *redis.Client
 }
 
-func NewService(repo Repository) Service {
-	return &service{repo: repo}
+func NewService(repo Repository, rdb *redis.Client) Service {
+	return &service{repo: repo, rdb: rdb}
 }
 func (s *service) Create(
 	ctx context.Context,
@@ -50,6 +54,11 @@ func (s *service) Create(
 
 	if err := s.repo.Create(ctx, params); err != nil {
 		return ProductResponse{}, err
+	}
+
+	dashboardCacheKey := dashboard.ProductReportKey
+	if err := s.rdb.Del(ctx, dashboardCacheKey).Err(); err != nil {
+		log.Printf("failed to invalidate dashboard product cache: %v", err)
 	}
 
 	return ProductResponse{
@@ -70,9 +79,7 @@ func (s *service) List(
 
 	limit := int32(p.PageSize)
 	offset := int32((p.Page - 1) * p.PageSize)
-	fmt.Println(p)
 
-	// 1. Tambahkan semua field filter ke dalam ListProductsParams
 	rows, err := s.repo.List(ctx, dbgen.ListProductsParams{
 		SearchName: helper.StringPtrValue(p.Name),          // "" = no filter
 		CategoryID: helper.StringPtrValue(p.Category),      // "" = no filter
@@ -89,8 +96,6 @@ func (s *service) List(
 		return nil, 0, err
 	}
 
-	// 2. Penting: Count juga harus menerima filter yang sama
-	// agar jumlah total data sinkron dengan filter yang aktif
 	total, err := s.repo.Count(ctx, dbgen.CountProductsParams{
 		SearchName: helper.StringPtrValue(p.Name),          // "" = no filter
 		CategoryID: helper.StringPtrValue(p.Category),      // "" = no filter
@@ -141,6 +146,11 @@ func (s *service) Update(
 		return ProductResponse{}, err
 	}
 
+	dashboardCacheKey := dashboard.ProductReportKey
+	if err := s.rdb.Del(ctx, dashboardCacheKey).Err(); err != nil {
+		log.Printf("failed to invalidate dashboard product cache: %v", err)
+	}
+
 	return s.GetByID(ctx, id)
 }
 func (s *service) Delete(ctx context.Context, id string) error {
@@ -158,8 +168,9 @@ func mapListToResponse(r dbgen.ListProductsRow) ProductResponse {
 		TotalSold:     int(r.TotalSold),
 		IsActive:      r.IsActive,
 		Category: CategoryResponse{
-			ID:   r.CategoryID,
-			Name: r.CategoryName,
+			ID:          r.CategoryID,
+			Name:        r.CategoryName,
+			Description: r.CategoryDescription.String,
 		},
 	}
 }
@@ -174,8 +185,9 @@ func mapDetailToResponse(r dbgen.GetProductByIDRow) ProductResponse {
 		StockQuantity: int(r.StockQuantity),
 		IsActive:      r.IsActive,
 		Category: CategoryResponse{
-			ID:   r.CategoryID,
-			Name: r.CategoryName,
+			ID:          r.CategoryID,
+			Name:        r.CategoryName,
+			Description: r.CategoryDescription.String,
 		},
 	}
 }

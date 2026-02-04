@@ -3,6 +3,7 @@ package order_test
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -57,7 +58,6 @@ func TestService_Create_WithTransaction(t *testing.T) {
 		mock.ExpectCommit()
 
 		// --- Repo Mock Expectations ---
-		// Kita butuh transaksi dummy untuk dikembalikan oleh BeginTx mock
 		dbTmp, _, _ := sqlmock.New()
 		defer dbTmp.Close()
 
@@ -70,7 +70,7 @@ func TestService_Create_WithTransaction(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
-		assert.Equal(t, 2, res.TotalQuantity)
+		assert.Equal(t, 2, int(res.TotalQuantity))
 		assert.Equal(t, float64(100000), res.TotalPrice)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
@@ -124,7 +124,7 @@ func TestService_List(t *testing.T) {
 		svc, repo, _ := setupServiceTest(t)
 		p := order.ListParams{Page: 1, PageSize: 10}
 
-		rows := []dbgen.Order{
+		rows := []dbgen.GetOrdersRow{
 			{
 				ID:            "o1",
 				CustomerID:    "c1",
@@ -162,47 +162,62 @@ func TestService_GetByID(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		svc, repo, _ := setupServiceTest(t)
 
-		// Mock Data Parent Order
-		repo.EXPECT().GetByID(ctx, id).Return(dbgen.Order{
-			ID:         id,
-			TotalPrice: decimal.NewFromFloat(200000),
-		}, nil)
+		// 1. Siapkan mock data items dalam bentuk JSON (seperti yang dihasilkan DB)
+		mockItemsJSON := `[
+            {
+                "id": "item-uuid-1",
+                "product_id": "prod-uuid-1",
+                "quantity": 2,
+                "unit_price": 100000
+            }
+        ]`
 
-		// Mock Data Child Items
-		repo.EXPECT().GetItemsByOrderID(ctx, id).Return([]dbgen.OrderItem{
-			{
-				ID:        uuid.NewString(),
-				OrderID:   id,
-				UnitPrice: decimal.NewFromFloat(100000),
-				Quantity:  2,
-			},
+		// 2. Mock return dari repo dengan Items sebagai json.RawMessage
+		repo.EXPECT().GetByID(ctx, id).Return(dbgen.GetOrderByIDRow{
+			ID:            id,
+			CustomerID:    uuid.NewString(),
+			CustomerName:  "John Doe",
+			CustomerEmail: "john@example.com",
+			TotalQuantity: 2,
+			TotalPrice:    decimal.NewFromFloat(200000),
+			CreatedAt:     time.Now(),
+			Items:         json.RawMessage(mockItemsJSON), // Data JSON simulasi
 		}, nil)
 
 		res, err := svc.GetByID(ctx, id)
+
+		// 3. Assertions
 		assert.NoError(t, err)
 		assert.Equal(t, id, res.ID)
-		assert.Len(t, res.Items, 1)
+		assert.Len(t, res.Items, 1) // Memastikan unmarshal berhasil
+		assert.Equal(t, "prod-uuid-1", res.Items[0].ProductID)
 		assert.Equal(t, float64(200000), res.TotalPrice)
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		svc, repo, _ := setupServiceTest(t)
 
-		// Sqlc biasanya mengembalikan sql.ErrNoRows jika tidak ketemu
-		repo.EXPECT().GetByID(ctx, id).Return(dbgen.Order{}, sql.ErrNoRows)
+		repo.EXPECT().GetByID(ctx, id).Return(dbgen.GetOrderByIDRow{}, sql.ErrNoRows)
 
 		_, err := svc.GetByID(ctx, id)
 		assert.Error(t, err)
+		assert.ErrorIs(t, err, sql.ErrNoRows)
 	})
 
-	t.Run("repo error on items", func(t *testing.T) {
+	t.Run("unmarshal error", func(t *testing.T) {
 		svc, repo, _ := setupServiceTest(t)
 
-		repo.EXPECT().GetByID(ctx, id).Return(dbgen.Order{ID: id}, nil)
-		// Simulasi error saat mengambil detail items
-		repo.EXPECT().GetItemsByOrderID(ctx, id).Return(nil, errors.New("db error"))
+		// Broken JSON
+		invalidJSON := `[{"id": "item-1", "quantity": ]`
 
-		_, err := svc.GetByID(ctx, id)
-		assert.Error(t, err)
+		repo.EXPECT().GetByID(ctx, id).Return(dbgen.GetOrderByIDRow{
+			ID:    id,
+			Items: json.RawMessage(invalidJSON),
+		}, nil)
+
+		res, err := svc.GetByID(ctx, id)
+
+		assert.NoError(t, err)
+		assert.Empty(t, res.Items)
 	})
 }

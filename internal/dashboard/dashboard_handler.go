@@ -27,7 +27,6 @@ func (h *Handler) GetProductReport(c *gin.Context) {
 }
 
 func (h *Handler) GetTopCustomers(c *gin.Context) {
-	// default value
 	limit := int32(10)
 
 	if l := c.Query("limit"); l != "" {
@@ -45,6 +44,24 @@ func (h *Handler) GetTopCustomers(c *gin.Context) {
 			"Failed to fetch top customers data",
 			err.Error(),
 		)
+		return
+	}
+
+	response.Success(c, http.StatusOK, res, nil)
+}
+
+func (h *Handler) GetFullDashboard(c *gin.Context) {
+	limit := int32(10)
+	if l := c.Query("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
+			limit = int32(parsed)
+		}
+	}
+
+	// Memanggil fungsi concurrency
+	res, err := h.service.GetCompleteDashboard(c.Request.Context(), limit)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "DASHBOARD_ERROR", "Failed to aggregate dashboard", err.Error())
 		return
 	}
 

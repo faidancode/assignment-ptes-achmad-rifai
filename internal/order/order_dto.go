@@ -21,7 +21,7 @@ type ListParams struct {
 type OrderItemResponse struct {
 	ID           string  `json:"id"`
 	ProductID    string  `json:"product_id"`
-	ProductName  string  `json:"product_name"`
+	ProductName  string  `json:"product_name,omitempty"`
 	Quantity     int     `json:"quantity"`
 	UnitPrice    float64 `json:"unit_price"`
 	CategoryName string  `json:"category_name,omitempty"`

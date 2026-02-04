@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -152,7 +153,10 @@ func (s *service) GetByID(ctx context.Context, id string) (OrderResponse, error)
 	}
 
 	var items []OrderItemResponse
+
 	if len(r.Items) > 0 {
+		fmt.Printf("raw items: %s\n", string(r.Items))
+
 		if err := json.Unmarshal(r.Items, &items); err != nil {
 			log.Printf("error unmarshal items for order %s: %v", r.ID, err)
 		}

@@ -85,9 +85,8 @@ SELECT
 FROM
     orders o
     JOIN customers c ON o.customer_id = c.id
-    JOIN order_items oi ON o.id = oi.order_id
-    JOIN products p ON oi.product_id = p.id
-    JOIN categories cat ON p.category_id = cat.id
+    LEFT JOIN order_items oi ON o.id = oi.order_id
+    LEFT JOIN products p ON oi.product_id = p.id
 WHERE
     o.id = ?
 GROUP BY

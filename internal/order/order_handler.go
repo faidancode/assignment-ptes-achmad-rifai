@@ -2,6 +2,7 @@ package order
 
 import (
 	"assignment-ptes-achmad-rifai/internal/pkg/response"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -78,6 +79,7 @@ func (h *Handler) GetAll(c *gin.Context) {
 // @Router       /orders/{id} [get]
 func (h *Handler) GetByID(c *gin.Context) {
 	id := c.Param("id")
+	fmt.Println(id)
 	res, err := h.service.GetByID(c.Request.Context(), id)
 	if err != nil {
 		response.Error(c, http.StatusNotFound, "NOT_FOUND", "Order not found", err.Error())

@@ -137,6 +137,10 @@ func (h *Handler) GetByID(c *gin.Context) {
 func (h *Handler) Update(c *gin.Context) {
 	id := c.Param("id")
 	var req UpdateProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, 400, "BAD_REQUEST", "Invalid request body", err.Error())
+		return
+	}
 	res, err := h.service.Update(c.Request.Context(), id, req)
 	if err != nil {
 		if errors.Is(err, ErrProductNotFound) {

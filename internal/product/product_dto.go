@@ -32,8 +32,8 @@ type ProductResponse struct {
 
 type CategoryResponse struct {
 	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 type ListParams struct {

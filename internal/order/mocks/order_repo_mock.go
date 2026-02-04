@@ -85,10 +85,10 @@ func (mr *MockRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
 }
 
 // GetByID mocks base method.
-func (m *MockRepository) GetByID(ctx context.Context, id string) (dbgen.Order, error) {
+func (m *MockRepository) GetByID(ctx context.Context, id string) (dbgen.GetOrderByIDRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, id)
-	ret0, _ := ret[0].(dbgen.Order)
+	ret0, _ := ret[0].(dbgen.GetOrderByIDRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -115,18 +115,18 @@ func (mr *MockRepositoryMockRecorder) GetItemsByOrderID(ctx, orderID any) *gomoc
 }
 
 // GetOrders mocks base method.
-func (m *MockRepository) GetOrders(ctx context.Context) ([]dbgen.Order, error) {
+func (m *MockRepository) GetOrders(ctx context.Context, params dbgen.GetOrdersParams) ([]dbgen.GetOrdersRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrders", ctx)
-	ret0, _ := ret[0].([]dbgen.Order)
+	ret := m.ctrl.Call(m, "GetOrders", ctx, params)
+	ret0, _ := ret[0].([]dbgen.GetOrdersRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetOrders indicates an expected call of GetOrders.
-func (mr *MockRepositoryMockRecorder) GetOrders(ctx any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetOrders(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrders", reflect.TypeOf((*MockRepository)(nil).GetOrders), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrders", reflect.TypeOf((*MockRepository)(nil).GetOrders), ctx, params)
 }
 
 // WithTx mocks base method.

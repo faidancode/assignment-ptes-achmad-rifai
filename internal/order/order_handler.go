@@ -3,6 +3,7 @@ package order
 import (
 	"assignment-ptes-achmad-rifai/internal/pkg/response"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,7 +32,13 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 func (h *Handler) GetAll(c *gin.Context) {
-	res, err := h.service.List(c.Request.Context())
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	params := ListParams{
+		Page:     page,
+		PageSize: pageSize,
+	}
+	res, err := h.service.List(c.Request.Context(), params)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "FETCH_ERROR", "Failed to fetch orders", err.Error())
 		return

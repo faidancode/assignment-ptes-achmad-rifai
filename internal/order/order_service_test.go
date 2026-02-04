@@ -122,6 +122,7 @@ func TestService_List(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// Sesuaikan dengan setupServiceTest yang mengembalikan (svc, repo, mock)
 		svc, repo, _ := setupServiceTest(t)
+		p := order.ListParams{Page: 1, PageSize: 10}
 
 		rows := []dbgen.Order{
 			{
@@ -134,9 +135,9 @@ func TestService_List(t *testing.T) {
 			},
 		}
 
-		repo.EXPECT().GetOrders(ctx).Return(rows, nil)
+		repo.EXPECT().GetOrders(ctx, gomock.Any()).Return(rows, nil)
 
-		res, err := svc.List(ctx)
+		res, err := svc.List(ctx, p)
 		assert.NoError(t, err)
 		assert.Len(t, res, 1)
 		assert.Equal(t, "o1", res[0].ID)
@@ -145,10 +146,11 @@ func TestService_List(t *testing.T) {
 
 	t.Run("repo error", func(t *testing.T) {
 		svc, repo, _ := setupServiceTest(t)
+		p := order.ListParams{Page: 1, PageSize: 10}
 
-		repo.EXPECT().GetOrders(ctx).Return(nil, errors.New("db error"))
+		repo.EXPECT().GetOrders(ctx, gomock.Any()).Return(nil, errors.New("db error"))
 
-		_, err := svc.List(ctx)
+		_, err := svc.List(ctx, p)
 		assert.Error(t, err)
 	})
 }

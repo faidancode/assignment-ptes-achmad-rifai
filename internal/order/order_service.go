@@ -5,6 +5,8 @@ import (
 	"assignment-ptes-achmad-rifai/internal/shared/database/helper"
 	"context"
 	"database/sql"
+	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,7 +16,7 @@ import (
 
 type Service interface {
 	Create(ctx context.Context, req CreateOrderRequest) (OrderResponse, error)
-	List(ctx context.Context) ([]OrderResponse, error)
+	List(ctx context.Context, params ListParams) ([]OrderResponse, error)
 	GetByID(ctx context.Context, id string) (OrderResponse, error)
 	Delete(ctx context.Context, id string) error
 }
@@ -89,57 +91,71 @@ func (s *service) Create(ctx context.Context, req CreateOrderRequest) (OrderResp
 	return OrderResponse{
 		ID:            orderID,
 		CustomerID:    req.CustomerID,
-		TotalQuantity: totalQty,
+		TotalQuantity: int32(totalQty),
 		TotalPrice:    totalPrice,
 		CreatedAt:     now,
 		Items:         itemResponses,
 	}, nil
 }
 
-func (s *service) List(ctx context.Context) ([]OrderResponse, error) {
-	rows, err := s.repo.GetOrders(ctx)
+func (s *service) List(ctx context.Context, p ListParams) ([]OrderResponse, error) {
+	limit := int32(p.PageSize)
+	offset := int32((p.Page - 1) * p.PageSize)
+	rows, err := s.repo.GetOrders(ctx, dbgen.GetOrdersParams{
+		Limit:  limit,
+		Offset: offset,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	res := make([]OrderResponse, 0, len(rows))
-	for _, row := range rows {
-		res = append(res, OrderResponse{
-			ID:            row.ID,
-			CustomerID:    row.CustomerID,
-			TotalQuantity: int(row.TotalQuantity),
-			TotalPrice:    helper.DecimalToFloat64(row.TotalPrice),
-			CreatedAt:     row.CreatedAt,
+	var resp []OrderResponse
+	for _, r := range rows {
+		var items []OrderItemResponse
+		if len(r.Items) > 0 {
+			if err := json.Unmarshal(r.Items, &items); err != nil {
+				log.Printf("error unmarshal items for order %s: %v", r.ID, err)
+			}
+		}
+
+		totalPrice, _ := r.TotalPrice.Float64()
+
+		resp = append(resp, OrderResponse{
+			ID:            r.ID,
+			CustomerID:    r.CustomerID,
+			CustomerName:  r.CustomerName,
+			CustomerEmail: r.CustomerEmail,
+			TotalQuantity: r.TotalQuantity,
+			TotalPrice:    totalPrice,
+			CreatedAt:     r.CreatedAt,
+			Items:         items,
 		})
 	}
-	return res, nil
+	return resp, nil
 }
 
 func (s *service) GetByID(ctx context.Context, id string) (OrderResponse, error) {
-	row, err := s.repo.GetByID(ctx, id)
+	r, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return OrderResponse{}, err
 	}
 
-	items, err := s.repo.GetItemsByOrderID(ctx, id)
-	if err != nil {
-		// ERROR CEK DI SINI: Pastikan error ini dikembalikan (return)
-		return OrderResponse{}, err
-	}
-	itemResponses := make([]OrderItemResponse, 0)
-	for _, item := range items {
-		itemResponses = append(itemResponses, OrderItemResponse{
-			ID: item.ID, ProductID: item.ProductID, Quantity: int(item.Quantity), UnitPrice: helper.DecimalToFloat64(item.UnitPrice),
-		})
+	var items []OrderItemResponse
+	if len(r.Items) > 0 {
+		if err := json.Unmarshal(r.Items, &items); err != nil {
+			log.Printf("error unmarshal items for order %s: %v", r.ID, err)
+		}
 	}
 
 	return OrderResponse{
-		ID:            row.ID,
-		CustomerID:    row.CustomerID,
-		TotalQuantity: int(row.TotalQuantity),
-		TotalPrice:    helper.DecimalToFloat64(row.TotalPrice),
-		CreatedAt:     row.CreatedAt,
-		Items:         itemResponses,
+		ID:            r.ID,
+		CustomerID:    r.CustomerID,
+		CustomerName:  r.CustomerName,
+		CustomerEmail: r.CustomerEmail,
+		TotalQuantity: int32(r.TotalQuantity),
+		TotalPrice:    helper.DecimalToFloat64(r.TotalPrice),
+		CreatedAt:     r.CreatedAt,
+		Items:         items,
 	}, nil
 }
 

@@ -19,7 +19,7 @@ import (
 
 type fakeOrderService struct {
 	CreateFn  func(ctx context.Context, req order.CreateOrderRequest) (order.OrderResponse, error)
-	ListFn    func(ctx context.Context) ([]order.OrderResponse, error)
+	ListFn    func(ctx context.Context, p order.ListParams) ([]order.OrderResponse, error)
 	GetByIDFn func(ctx context.Context, id string) (order.OrderResponse, error)
 	DeleteFn  func(ctx context.Context, id string) error
 }
@@ -27,8 +27,8 @@ type fakeOrderService struct {
 func (f *fakeOrderService) Create(ctx context.Context, req order.CreateOrderRequest) (order.OrderResponse, error) {
 	return f.CreateFn(ctx, req)
 }
-func (f *fakeOrderService) List(ctx context.Context) ([]order.OrderResponse, error) {
-	return f.ListFn(ctx)
+func (f *fakeOrderService) List(ctx context.Context, p order.ListParams) ([]order.OrderResponse, error) {
+	return f.ListFn(ctx, p)
 }
 func (f *fakeOrderService) GetByID(ctx context.Context, id string) (order.OrderResponse, error) {
 	return f.GetByIDFn(ctx, id)
@@ -105,7 +105,7 @@ func TestHandler_Create(t *testing.T) {
 func TestHandler_GetAll(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		svc := &fakeOrderService{
-			ListFn: func(ctx context.Context) ([]order.OrderResponse, error) {
+			ListFn: func(ctx context.Context, p order.ListParams) ([]order.OrderResponse, error) {
 				return []order.OrderResponse{
 					{
 						ID:            "order-1",
@@ -142,7 +142,7 @@ func TestHandler_GetAll(t *testing.T) {
 
 	t.Run("service error", func(t *testing.T) {
 		svc := &fakeOrderService{
-			ListFn: func(ctx context.Context) ([]order.OrderResponse, error) {
+			ListFn: func(ctx context.Context, p order.ListParams) ([]order.OrderResponse, error) {
 				return nil, errors.New("database connection lost")
 			},
 		}

@@ -21,11 +21,11 @@ type ListParams struct {
 	PageSize int
 	Name     *string
 	Category *string
-	MinPrice *float64 // Tambahkan ini
-	MaxPrice *float64 // Tambahkan ini
-	MinStock *int32   // Tambahkan ini
-	MaxStock *int32   // Tambahkan ini
-	Sort     *string  // Ini untuk order_by
+	MinPrice *float64
+	MaxPrice *float64
+	MinStock *int32
+	MaxStock *int32
+	Sort     *string
 }
 type service struct {
 	repo Repository

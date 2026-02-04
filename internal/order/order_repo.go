@@ -13,8 +13,8 @@ type Repository interface {
 
 	CreateOrder(ctx context.Context, params dbgen.CreateOrderParams) error
 	CreateOrderItem(ctx context.Context, params dbgen.CreateOrderItemParams) error
-	GetOrders(ctx context.Context) ([]dbgen.Order, error)
-	GetByID(ctx context.Context, id string) (dbgen.Order, error)
+	GetOrders(ctx context.Context, params dbgen.GetOrdersParams) ([]dbgen.GetOrdersRow, error)
+	GetByID(ctx context.Context, id string) (dbgen.GetOrderByIDRow, error)
 	GetItemsByOrderID(ctx context.Context, orderID string) ([]dbgen.OrderItem, error)
 	Delete(ctx context.Context, id string) error
 }
@@ -47,11 +47,11 @@ func (r *repository) CreateOrderItem(ctx context.Context, params dbgen.CreateOrd
 	return r.q.CreateOrderItem(ctx, params)
 }
 
-func (r *repository) GetOrders(ctx context.Context) ([]dbgen.Order, error) {
-	return r.q.GetOrders(ctx)
+func (r *repository) GetOrders(ctx context.Context, params dbgen.GetOrdersParams) ([]dbgen.GetOrdersRow, error) {
+	return r.q.GetOrders(ctx, params)
 }
 
-func (r *repository) GetByID(ctx context.Context, id string) (dbgen.Order, error) {
+func (r *repository) GetByID(ctx context.Context, id string) (dbgen.GetOrderByIDRow, error) {
 	return r.q.GetOrderByID(ctx, id)
 }
 

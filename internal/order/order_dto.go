@@ -13,17 +13,26 @@ type CreateOrderRequest struct {
 	Items      []OrderItemRequest `json:"items" binding:"required,gt=0,dive"` //gt=0 slice validation
 }
 
+type ListParams struct {
+	Page     int
+	PageSize int
+}
+
 type OrderItemResponse struct {
-	ID        string  `json:"id"`
-	ProductID string  `json:"product_id"`
-	Quantity  int     `json:"quantity"`
-	UnitPrice float64 `json:"unit_price"`
+	ID           string  `json:"id"`
+	ProductID    string  `json:"product_id"`
+	ProductName  string  `json:"product_name"`
+	Quantity     int     `json:"quantity"`
+	UnitPrice    float64 `json:"unit_price"`
+	CategoryName string  `json:"category_name,omitempty"`
 }
 
 type OrderResponse struct {
 	ID            string              `json:"id"`
 	CustomerID    string              `json:"customer_id"`
-	TotalQuantity int                 `json:"total_quantity"`
+	CustomerName  string              `json:"customer_name,omitempty"`
+	CustomerEmail string              `json:"customer_email,omitempty"`
+	TotalQuantity int32               `json:"total_quantity"`
 	TotalPrice    float64             `json:"total_price"`
 	CreatedAt     time.Time           `json:"created_at"`
 	Items         []OrderItemResponse `json:"items,omitempty"`

@@ -7,14 +7,23 @@ package dbgen
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/shopspring/decimal"
 )
 
 const createOrder = `-- name: CreateOrder :exec
-INSERT INTO orders (id, customer_id, total_quantity, total_price, created_at)
-VALUES (?, ?, ?, ?, ?)
+INSERT INTO
+    orders (
+        id,
+        customer_id,
+        total_quantity,
+        total_price,
+        created_at
+    )
+VALUES
+    (?, ?, ?, ?, ?)
 `
 
 type CreateOrderParams struct {
@@ -38,8 +47,10 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) error 
 }
 
 const createOrderItem = `-- name: CreateOrderItem :exec
-INSERT INTO order_items (id, order_id, product_id, quantity, unit_price)
-VALUES (?, ?, ?, ?, ?)
+INSERT INTO
+    order_items (id, order_id, product_id, quantity, unit_price)
+VALUES
+    (?, ?, ?, ?, ?)
 `
 
 type CreateOrderItemParams struct {
@@ -62,7 +73,9 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 }
 
 const deleteOrder = `-- name: DeleteOrder :exec
-DELETE FROM orders WHERE id = ?
+DELETE FROM orders
+WHERE
+    id = ?
 `
 
 func (q *Queries) DeleteOrder(ctx context.Context, id string) error {
@@ -71,28 +84,83 @@ func (q *Queries) DeleteOrder(ctx context.Context, id string) error {
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
-SELECT id, customer_id, total_quantity, total_price, created_at 
-FROM orders 
-WHERE id = ? LIMIT 1
+SELECT
+    o.id,
+    o.total_quantity,
+    o.total_price,
+    o.created_at,
+    o.customer_id,
+    c.name AS customer_name,
+    c.email AS customer_email,
+    CAST(
+        JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id',
+                oi.id,
+                'product_id',
+                p.id,
+                'product_name',
+                p.name,
+                'quantity',
+                oi.quantity,
+                'unit_price',
+                oi.unit_price
+            )
+        ) AS JSON
+    ) AS items
+FROM
+    orders o
+    JOIN customers c ON o.customer_id = c.id
+    JOIN order_items oi ON o.id = oi.order_id
+    JOIN products p ON oi.product_id = p.id
+    JOIN categories cat ON p.category_id = cat.id
+WHERE
+    o.id = ?
+GROUP BY
+    o.id,
+    c.id
+LIMIT
+    1
 `
 
-func (q *Queries) GetOrderByID(ctx context.Context, id string) (Order, error) {
+type GetOrderByIDRow struct {
+	ID            string          `json:"id"`
+	TotalQuantity int32           `json:"total_quantity"`
+	TotalPrice    decimal.Decimal `json:"total_price"`
+	CreatedAt     time.Time       `json:"created_at"`
+	CustomerID    string          `json:"customer_id"`
+	CustomerName  string          `json:"customer_name"`
+	CustomerEmail string          `json:"customer_email"`
+	Items         json.RawMessage `json:"items"`
+}
+
+func (q *Queries) GetOrderByID(ctx context.Context, id string) (GetOrderByIDRow, error) {
 	row := q.queryRow(ctx, q.getOrderByIDStmt, getOrderByID, id)
-	var i Order
+	var i GetOrderByIDRow
 	err := row.Scan(
 		&i.ID,
-		&i.CustomerID,
 		&i.TotalQuantity,
 		&i.TotalPrice,
 		&i.CreatedAt,
+		&i.CustomerID,
+		&i.CustomerName,
+		&i.CustomerEmail,
+		&i.Items,
 	)
 	return i, err
 }
 
 const getOrderItemsByOrderID = `-- name: GetOrderItemsByOrderID :many
-SELECT id, order_id, product_id, quantity, unit_price
-FROM order_items
-WHERE order_id = ?
+SELECT
+    id,
+    order_id,
+    product_id,
+    quantity,
+    unit_price
+FROM
+    order_items
+WHERE
+    order_id = ?
 `
 
 func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID string) ([]OrderItem, error) {
@@ -125,26 +193,80 @@ func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID string) ([
 }
 
 const getOrders = `-- name: GetOrders :many
-SELECT id, customer_id, total_quantity, total_price, created_at 
-FROM orders 
-ORDER BY created_at DESC
+SELECT
+    o.id,
+    o.total_quantity,
+    o.total_price,
+    o.created_at,
+    o.customer_id,
+    c.name AS customer_name,
+    c.email AS customer_email,
+    CAST(
+        JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id',
+                oi.id,
+                'product_id',
+                p.id,
+                'product_name',
+                p.name,
+                'quantity',
+                oi.quantity,
+                'unit_price',
+                oi.unit_price
+            )
+        ) AS JSON
+    ) AS items
+FROM
+    orders o
+    JOIN customers c ON o.customer_id = c.id
+    JOIN order_items oi ON o.id = oi.order_id
+    JOIN products p ON oi.product_id = p.id
+GROUP BY
+    o.id,
+    c.id
+ORDER BY
+    o.created_at DESC
+LIMIT
+    ?
+OFFSET
+    ?
 `
 
-func (q *Queries) GetOrders(ctx context.Context) ([]Order, error) {
-	rows, err := q.query(ctx, q.getOrdersStmt, getOrders)
+type GetOrdersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type GetOrdersRow struct {
+	ID            string          `json:"id"`
+	TotalQuantity int32           `json:"total_quantity"`
+	TotalPrice    decimal.Decimal `json:"total_price"`
+	CreatedAt     time.Time       `json:"created_at"`
+	CustomerID    string          `json:"customer_id"`
+	CustomerName  string          `json:"customer_name"`
+	CustomerEmail string          `json:"customer_email"`
+	Items         json.RawMessage `json:"items"`
+}
+
+func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrdersRow, error) {
+	rows, err := q.query(ctx, q.getOrdersStmt, getOrders, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Order
+	var items []GetOrdersRow
 	for rows.Next() {
-		var i Order
+		var i GetOrdersRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.CustomerID,
 			&i.TotalQuantity,
 			&i.TotalPrice,
 			&i.CreatedAt,
+			&i.CustomerID,
+			&i.CustomerName,
+			&i.CustomerEmail,
+			&i.Items,
 		); err != nil {
 			return nil, err
 		}

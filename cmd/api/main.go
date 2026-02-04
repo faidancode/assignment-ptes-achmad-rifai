@@ -9,7 +9,9 @@ import (
 	"assignment-ptes-achmad-rifai/internal/order"
 	"assignment-ptes-achmad-rifai/internal/product"
 	"assignment-ptes-achmad-rifai/internal/shared/database/dbgen"
+	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -34,6 +36,55 @@ type ControllerRegistry struct {
 	Dashboard *dashboard.Handler
 }
 
+func connectDBWithRetry(dsn string, maxRetries int) (*sql.DB, error) {
+	var db *sql.DB
+	var err error
+
+	for i := 1; i <= maxRetries; i++ {
+		db, err = sql.Open("mysql", dsn)
+		if err == nil {
+			err = db.Ping()
+			if err == nil {
+				log.Println("✅ Successfully connected to MySQL database")
+				return db, nil
+			}
+		}
+
+		log.Printf("⚠️  MySQL connection attempt %d/%d failed: %v", i, maxRetries, err)
+
+		if i < maxRetries {
+			time.Sleep(time.Second * 5)
+		}
+	}
+
+	return nil, err
+}
+
+func connectRedisWithRetry(addr string, maxRetries int) (*redis.Client, error) {
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: "",
+		DB:       0,
+	})
+
+	for i := 1; i <= maxRetries; i++ {
+		ctx := context.Background()
+		_, err := rdb.Ping(ctx).Result()
+		if err == nil {
+			log.Println("✅ Successfully connected to Redis")
+			return rdb, nil
+		}
+
+		log.Printf("⚠️  Redis connection attempt %d/%d failed: %v", i, maxRetries, err)
+
+		if i < maxRetries {
+			time.Sleep(time.Second * 5)
+		}
+	}
+
+	return nil, fmt.Errorf("failed to connect to Redis after %d attempts", maxRetries)
+}
+
 // @title           Assignment PTES API
 // @version         1.0
 // @description     API Server for Order and Dashboard Management.
@@ -53,23 +104,23 @@ func main() {
 		log.Println("Warning: .env file not found")
 	}
 
-	db, err := sql.Open("mysql", os.Getenv("DB_URL"))
+	// Connect to MySQL with retry (max 10x, timeout 50s)
+	db, err := connectDBWithRetry(os.Getenv("DB_URL"), 10)
 	if err != nil {
-		log.Fatal("Cannot connect to database:", err)
+		log.Fatal("❌ Cannot connect to database after retries:", err)
 	}
 	defer db.Close()
 
-	if err := db.Ping(); err != nil {
-		log.Fatal("Database unreachable:", err)
-	}
-
 	queries := dbgen.New(db)
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_URL"),
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
+	// Connect to Redis with retry (max 10x, timeout 50s)
+	rdb, err := connectRedisWithRetry(os.Getenv("REDIS_URL"), 10)
+	if err != nil {
+		log.Fatal("❌ Cannot connect to Redis after retries:", err)
+	}
+	defer rdb.Close()
+
+	log.Println("🚀 All services connected successfully, starting server...")
 
 	// Dependency Injection (DI)
 

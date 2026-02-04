@@ -29,8 +29,10 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
 COPY --from=builder /app/main .
-# Pastikan file .env ada di folder yang sama saat build
+
 COPY .env .
+
+COPY --from=builder /app/docs ./docs
 
 EXPOSE 3000
 

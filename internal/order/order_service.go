@@ -41,8 +41,12 @@ func (s *service) Create(ctx context.Context, req CreateOrderRequest) (OrderResp
 	defer tx.Rollback()
 
 	txRepo := s.repo.WithTx(tx)
+	newUUID, err := uuid.NewV7()
+	if err != nil {
+		return OrderResponse{}, err
+	}
 
-	orderID := uuid.NewString()
+	orderID := newUUID.String()
 	now := time.Now()
 	var totalQty int
 	var totalPrice float64
@@ -66,7 +70,14 @@ func (s *service) Create(ctx context.Context, req CreateOrderRequest) (OrderResp
 
 	itemResponses := make([]OrderItemResponse, 0)
 	for _, item := range req.Items {
-		itemID := uuid.NewString()
+
+		newUUID, err := uuid.NewV7()
+		if err != nil {
+			return OrderResponse{}, err
+		}
+
+		itemID := newUUID.String()
+
 		itemParams := dbgen.CreateOrderItemParams{
 			ID:        itemID,
 			OrderID:   orderID,

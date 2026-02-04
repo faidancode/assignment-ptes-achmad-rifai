@@ -3,8 +3,6 @@ package category
 import (
 	"assignment-ptes-achmad-rifai/internal/shared/database/dbgen"
 	"context"
-
-	"github.com/google/uuid"
 )
 
 /*
@@ -38,7 +36,6 @@ func (r *repository) Create(
 	ctx context.Context,
 	params dbgen.CreateCategoryParams,
 ) error {
-	params.ID = uuid.New().String()
 	return r.q.CreateCategory(ctx, params)
 }
 

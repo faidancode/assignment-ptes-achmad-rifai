@@ -3,8 +3,6 @@ package product
 import (
 	"assignment-ptes-achmad-rifai/internal/shared/database/dbgen"
 	"context"
-
-	"github.com/google/uuid"
 )
 
 //go:generate mockgen -source=product_repo.go -destination=mocks/product_repo_mock.go -package=mock
@@ -29,7 +27,6 @@ func NewRepository(q *dbgen.Queries) Repository {
 }
 
 func (r *repository) Create(ctx context.Context, params dbgen.CreateProductParams) error {
-	params.ID = uuid.New().String()
 	return r.q.CreateProduct(ctx, params)
 }
 

@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -32,8 +33,14 @@ func (s *service) Create(
 	ctx context.Context,
 	req CreateProductRequest,
 ) (ProductResponse, error) {
+	newUUID, err := uuid.NewV7()
+	if err != nil {
+		return ProductResponse{}, err
+	}
 
+	productID := newUUID.String()
 	params := dbgen.CreateProductParams{
+		ID:            productID,
 		Name:          req.Name,
 		Description:   helper.StringToNull(req.Description),
 		Price:         helper.Float64ToDecimal(req.Price),
@@ -52,6 +59,7 @@ func (s *service) Create(
 	}
 
 	return ProductResponse{
+		ID:            productID,
 		Name:          req.Name,
 		Description:   helper.StringPtrValue(req.Description),
 		Price:         req.Price,

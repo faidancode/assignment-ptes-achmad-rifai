@@ -33,7 +33,11 @@ func (s *service) Create(
 	req CreateCategoryRequest,
 ) (CategoryResponse, error) {
 
-	id := uuid.NewString()
+	newUUID, err := uuid.NewV7()
+	if err != nil {
+		return CategoryResponse{}, err // Tangani error jika gagal generate
+	}
+	id := newUUID.String()
 
 	params := dbgen.CreateCategoryParams{
 		ID:          id,
@@ -45,7 +49,6 @@ func (s *service) Create(
 		return CategoryResponse{}, err
 	}
 
-	// 🔥 mapping langsung, tanpa query tambahan
 	return CategoryResponse{
 		ID:          id,
 		Name:        req.Name,
@@ -64,7 +67,6 @@ func (s *service) List(ctx context.Context, p ListParams) ([]CategoryResponse, e
 	limit := int32(p.PageSize)
 	offset := int32((p.Page - 1) * p.PageSize)
 
-	// DEBUG: Cek di console saat runtime
 	log.Printf("Executing GetCategories with Limit: %d, Offset: %d", limit, offset)
 	rows, err := s.repo.GetCategories(ctx, dbgen.GetCategoriesParams{
 		Limit:  limit,
@@ -76,7 +78,6 @@ func (s *service) List(ctx context.Context, p ListParams) ([]CategoryResponse, e
 
 	res := make([]CategoryResponse, 0, len(rows))
 	for _, row := range rows {
-		// Panggil helper dengan parameter mentah
 		res = append(res, toResponse(row.ID, row.Name))
 	}
 

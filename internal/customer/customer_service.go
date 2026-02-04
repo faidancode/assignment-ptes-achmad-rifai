@@ -26,7 +26,12 @@ func NewService(repo Repository) Service {
 }
 
 func (s *service) Create(ctx context.Context, req CreateCustomerRequest) (CustomerResponse, error) {
-	id := uuid.NewString()
+	newUUID, err := uuid.NewV7()
+	if err != nil {
+		return CustomerResponse{}, err
+	}
+
+	id := newUUID.String()
 	now := time.Now()
 
 	params := dbgen.CreateCustomerParams{

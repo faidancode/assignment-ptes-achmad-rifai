@@ -76,12 +76,15 @@ func TestService_Create(t *testing.T) {
 func TestService_List(t *testing.T) {
 	ctx := context.Background()
 	p := category.ListParams{Page: 1, PageSize: 10}
-
+	expectedRepoParams := dbgen.GetCategoriesParams{
+		Limit:  10,
+		Offset: 0,
+	}
 	t.Run("success", func(t *testing.T) {
 		svc, repo := setupServiceTest(t)
 
 		repo.EXPECT().
-			GetCategories(ctx, p).
+			GetCategories(ctx, expectedRepoParams).
 			Return([]dbgen.GetCategoriesRow{
 				{ID: "1", Name: "Food"},
 				{ID: "2", Name: "Drink"},
@@ -97,7 +100,7 @@ func TestService_List(t *testing.T) {
 		svc, repo := setupServiceTest(t)
 
 		repo.EXPECT().
-			GetCategories(ctx, p).
+			GetCategories(ctx, expectedRepoParams).
 			Return(nil, errors.New("db error"))
 
 		_, err := svc.List(ctx, p)

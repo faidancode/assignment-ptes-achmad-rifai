@@ -90,7 +90,16 @@ FROM
     customers
 ORDER BY
     created_at DESC
+LIMIT
+    ?
+OFFSET
+    ?
 `
+
+type GetCustomersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
 
 type GetCustomersRow struct {
 	ID        string    `json:"id"`
@@ -99,8 +108,8 @@ type GetCustomersRow struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func (q *Queries) GetCustomers(ctx context.Context) ([]GetCustomersRow, error) {
-	rows, err := q.query(ctx, q.getCustomersStmt, getCustomers)
+func (q *Queries) GetCustomers(ctx context.Context, arg GetCustomersParams) ([]GetCustomersRow, error) {
+	rows, err := q.query(ctx, q.getCustomersStmt, getCustomers, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

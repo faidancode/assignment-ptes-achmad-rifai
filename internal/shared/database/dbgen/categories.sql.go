@@ -48,7 +48,16 @@ SELECT
     description
 FROM categories
 ORDER BY name ASC
+LIMIT
+    ?
+OFFSET
+    ?
 `
+
+type GetCategoriesParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
 
 type GetCategoriesRow struct {
 	ID          string         `json:"id"`
@@ -56,8 +65,8 @@ type GetCategoriesRow struct {
 	Description sql.NullString `json:"description"`
 }
 
-func (q *Queries) GetCategories(ctx context.Context) ([]GetCategoriesRow, error) {
-	rows, err := q.query(ctx, q.getCategoriesStmt, getCategories)
+func (q *Queries) GetCategories(ctx context.Context, arg GetCategoriesParams) ([]GetCategoriesRow, error) {
+	rows, err := q.query(ctx, q.getCategoriesStmt, getCategories, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

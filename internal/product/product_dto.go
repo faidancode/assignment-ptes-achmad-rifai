@@ -35,3 +35,15 @@ type CategoryResponse struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
+
+type ListParams struct {
+	Page     int      `form:"page"`
+	PageSize int      `form:"page_size"`
+	Name     *string  `form:"name"`
+	Category *string  `form:"category"`
+	MinPrice *float64 `form:"min_price"`
+	MaxPrice *float64 `form:"max_price"`
+	MinStock *int32   `form:"min_stock"`
+	MaxStock *int32   `form:"max_stock"`
+	Sort     *string  `form:"sort"`
+}

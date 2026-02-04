@@ -19,7 +19,7 @@ import (
 
 type fakeCustomerService struct {
 	CreateFn  func(ctx context.Context, req customer.CreateCustomerRequest) (customer.CustomerResponse, error)
-	ListFn    func(ctx context.Context) ([]customer.CustomerResponse, error)
+	ListFn    func(ctx context.Context, p customer.ListParams) ([]customer.CustomerResponse, error)
 	GetByIDFn func(ctx context.Context, id string) (customer.CustomerResponse, error)
 	UpdateFn  func(ctx context.Context, id string, req customer.UpdateCustomerRequest) (customer.CustomerResponse, error)
 	DeleteFn  func(ctx context.Context, id string) error
@@ -29,8 +29,8 @@ func (f *fakeCustomerService) Create(ctx context.Context, req customer.CreateCus
 	return f.CreateFn(ctx, req)
 }
 
-func (f *fakeCustomerService) List(ctx context.Context) ([]customer.CustomerResponse, error) {
-	return f.ListFn(ctx)
+func (f *fakeCustomerService) List(ctx context.Context, p customer.ListParams) ([]customer.CustomerResponse, error) {
+	return f.ListFn(ctx, p)
 }
 
 func (f *fakeCustomerService) GetByID(ctx context.Context, id string) (customer.CustomerResponse, error) {
@@ -138,7 +138,7 @@ func TestHandler_Create(t *testing.T) {
 func TestHandler_GetAll(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		svc := &fakeCustomerService{
-			ListFn: func(ctx context.Context) ([]customer.CustomerResponse, error) {
+			ListFn: func(ctx context.Context, p customer.ListParams) ([]customer.CustomerResponse, error) {
 				return []customer.CustomerResponse{
 					{ID: "uuid-1", Name: "John Doe", Email: "john@example.com"},
 					{ID: "uuid-2", Name: "Jane Doe", Email: "jane@example.com"},
@@ -159,7 +159,7 @@ func TestHandler_GetAll(t *testing.T) {
 
 	t.Run("service error", func(t *testing.T) {
 		svc := &fakeCustomerService{
-			ListFn: func(ctx context.Context) ([]customer.CustomerResponse, error) {
+			ListFn: func(ctx context.Context, p customer.ListParams) ([]customer.CustomerResponse, error) {
 				return nil, errors.New("db error")
 			},
 		}

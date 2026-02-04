@@ -145,4 +145,11 @@ load-test:
 reset-seed:
 	@echo "Membersihkan data lama dan mengisi ulang..."
 	mysql -u$(DB_USER) -p$(DB_PASSWORD) -e "DELETE FROM products; DELETE FROM categories;" $(DB_NAME)
-	$(MAKE) seed	
+	$(MAKE) seed
+
+# =========================
+# SWAGGER
+# =========================
+.PHONY: swag
+swag:
+	swag init -g cmd/api/main.go	

@@ -13,7 +13,7 @@ Repository
 //go:generate mockgen -source=category_repo.go -destination=mocks/category_repo_mock.go -package=mock
 type Repository interface {
 	Create(ctx context.Context, params dbgen.CreateCategoryParams) error
-	GetCategories(ctx context.Context) ([]dbgen.GetCategoriesRow, error)
+	GetCategories(ctx context.Context, params dbgen.GetCategoriesParams) ([]dbgen.GetCategoriesRow, error)
 	GetByID(ctx context.Context, id string) (dbgen.GetCategoryByIDRow, error)
 	Update(ctx context.Context, params dbgen.UpdateCategoryParams) error
 	Delete(ctx context.Context, id string) error
@@ -43,9 +43,9 @@ func (r *repository) Create(
 }
 
 func (r *repository) GetCategories(
-	ctx context.Context,
+	ctx context.Context, params dbgen.GetCategoriesParams,
 ) ([]dbgen.GetCategoriesRow, error) {
-	return r.q.GetCategories(ctx)
+	return r.q.GetCategories(ctx, params)
 }
 
 func (r *repository) GetByID(

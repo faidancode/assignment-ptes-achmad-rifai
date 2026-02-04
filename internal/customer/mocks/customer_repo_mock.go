@@ -85,18 +85,18 @@ func (mr *MockRepositoryMockRecorder) GetByID(ctx, id any) *gomock.Call {
 }
 
 // GetCustomers mocks base method.
-func (m *MockRepository) GetCustomers(ctx context.Context) ([]dbgen.GetCustomersRow, error) {
+func (m *MockRepository) GetCustomers(ctx context.Context, params dbgen.GetCustomersParams) ([]dbgen.GetCustomersRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCustomers", ctx)
+	ret := m.ctrl.Call(m, "GetCustomers", ctx, params)
 	ret0, _ := ret[0].([]dbgen.GetCustomersRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCustomers indicates an expected call of GetCustomers.
-func (mr *MockRepositoryMockRecorder) GetCustomers(ctx any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetCustomers(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCustomers", reflect.TypeOf((*MockRepository)(nil).GetCustomers), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCustomers", reflect.TypeOf((*MockRepository)(nil).GetCustomers), ctx, params)
 }
 
 // Update mocks base method.

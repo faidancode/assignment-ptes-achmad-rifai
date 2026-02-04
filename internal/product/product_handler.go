@@ -17,6 +17,16 @@ func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
+// Create godoc
+// @Summary      Create a new product
+// @Description  Create a new product with category association and stock details
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param        request body      CreateProductRequest  true  "Product Request"
+// @Success      201      {object}  ProductResponse
+// @Failure      400      {object}  map[string]string
+// @Router       /products [post]
 func (h *Handler) Create(c *gin.Context) {
 	var req CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -33,9 +43,17 @@ func (h *Handler) Create(c *gin.Context) {
 	response.Success(c, http.StatusCreated, res, nil)
 }
 
+// GetAll godoc
+// @Summary      List products
+// @Description  Get a list of products with advanced filters (price, stock, category)
+// @Tags         products
+// @Produce      json
+// @Param        query    query    ListParams  false  "Filter & Pagination Query"
+// @Success      200      {array}   ProductResponse
+// @Router       /products [get]
 func (h *Handler) GetAll(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
 
 	// Tangkap filter dari query params
 	name := c.Query("name")
@@ -78,6 +96,16 @@ func (h *Handler) GetAll(c *gin.Context) {
 		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
 	})
 }
+
+// GetByID godoc
+// @Summary      Get product detail
+// @Description  Retrieve product information including its category details
+// @Tags         products
+// @Produce      json
+// @Param        id       path      string  true  "Product ID"
+// @Success      200      {object}  ProductResponse
+// @Failure      404      {object}  map[string]string
+// @Router       /products/{id} [get]
 func (h *Handler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -93,6 +121,19 @@ func (h *Handler) GetByID(c *gin.Context) {
 
 	response.Success(c, 200, res, nil)
 }
+
+// Update godoc
+// @Summary      Update product
+// @Description  Update product price, stock, or other details by ID
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Param        id       path      string                true  "Product ID"
+// @Param        request  body      UpdateProductRequest  true  "Update Request Body"
+// @Success      200      {object}  ProductResponse
+// @Failure      400      {object}  map[string]string
+// @Failure      404      {object}  map[string]string
+// @Router       /products/{id} [put]
 func (h *Handler) Update(c *gin.Context) {
 	id := c.Param("id")
 	var req UpdateProductRequest
@@ -108,6 +149,16 @@ func (h *Handler) Update(c *gin.Context) {
 
 	response.Success(c, 200, res, nil)
 }
+
+// Delete godoc
+// @Summary      Delete product
+// @Description  Remove a product record from the database
+// @Tags         products
+// @Produce      json
+// @Param        id       path      string  true  "Product ID"
+// @Success      204      {object}  nil
+// @Failure      404      {object}  map[string]string
+// @Router       /products/{id} [delete]
 func (h *Handler) Delete(c *gin.Context) {
 	id := c.Param("id")
 

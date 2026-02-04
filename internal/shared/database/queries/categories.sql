@@ -13,7 +13,11 @@ SELECT
     name,
     description
 FROM categories
-ORDER BY name ASC;
+ORDER BY name ASC
+LIMIT
+    ?
+OFFSET
+    ?;
 
 -- name: GetCategoryByID :one
 SELECT

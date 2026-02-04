@@ -19,7 +19,7 @@ import (
 
 type fakeCategoryService struct {
 	CreateFn  func(ctx context.Context, req category.CreateCategoryRequest) (category.CategoryResponse, error)
-	ListFn    func(ctx context.Context) ([]category.CategoryResponse, error)
+	ListFn    func(ctx context.Context, p category.ListParams) ([]category.CategoryResponse, error)
 	GetByIDFn func(ctx context.Context, id string) (category.CategoryResponse, error)
 	UpdateFn  func(ctx context.Context, id string, req category.UpdateCategoryRequest) (category.CategoryResponse, error)
 	DeleteFn  func(ctx context.Context, id string) error
@@ -29,8 +29,8 @@ func (f *fakeCategoryService) Create(ctx context.Context, req category.CreateCat
 	return f.CreateFn(ctx, req)
 }
 
-func (f *fakeCategoryService) List(ctx context.Context) ([]category.CategoryResponse, error) {
-	return f.ListFn(ctx)
+func (f *fakeCategoryService) List(ctx context.Context, p category.ListParams) ([]category.CategoryResponse, error) {
+	return f.ListFn(ctx, p)
 }
 
 func (f *fakeCategoryService) GetByID(ctx context.Context, id string) (category.CategoryResponse, error) {
@@ -167,7 +167,7 @@ func TestHandler_Create(t *testing.T) {
 func TestHandler_GetAll(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		svc := &fakeCategoryService{
-			ListFn: func(ctx context.Context) ([]category.CategoryResponse, error) {
+			ListFn: func(ctx context.Context, p category.ListParams) ([]category.CategoryResponse, error) {
 				return []category.CategoryResponse{
 					{ID: "1", Name: "Electronics", Description: "Tech"},
 					{ID: "2", Name: "Books", Description: "Reading"},
@@ -188,7 +188,7 @@ func TestHandler_GetAll(t *testing.T) {
 
 	t.Run("service error", func(t *testing.T) {
 		svc := &fakeCategoryService{
-			ListFn: func(ctx context.Context) ([]category.CategoryResponse, error) {
+			ListFn: func(ctx context.Context, p category.ListParams) ([]category.CategoryResponse, error) {
 				return nil, errors.New("db error")
 			},
 		}

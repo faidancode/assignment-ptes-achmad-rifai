@@ -77,6 +77,7 @@ func TestService_Create(t *testing.T) {
 
 func TestService_List(t *testing.T) {
 	ctx := context.Background()
+	p := customer.ListParams{Page: 1, PageSize: 10}
 
 	t.Run("success", func(t *testing.T) {
 		svc, repo := setupServiceTest(t)
@@ -97,10 +98,10 @@ func TestService_List(t *testing.T) {
 		}
 
 		repo.EXPECT().
-			GetCustomers(ctx).
+			GetCustomers(ctx, p).
 			Return(rows, nil)
 
-		res, err := svc.List(ctx)
+		res, err := svc.List(ctx, p)
 
 		assert.NoError(t, err)
 		assert.Len(t, res, 2)
@@ -110,12 +111,13 @@ func TestService_List(t *testing.T) {
 
 	t.Run("repo error", func(t *testing.T) {
 		svc, repo := setupServiceTest(t)
+		p := customer.ListParams{Page: 1, PageSize: 10}
 
 		repo.EXPECT().
-			GetCustomers(ctx).
+			GetCustomers(ctx, p).
 			Return(nil, errors.New("db error"))
 
-		_, err := svc.List(ctx)
+		_, err := svc.List(ctx, p)
 
 		assert.Error(t, err)
 	})

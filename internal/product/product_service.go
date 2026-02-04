@@ -19,17 +19,7 @@ type Service interface {
 	Update(ctx context.Context, id string, req UpdateProductRequest) (ProductResponse, error)
 	Delete(ctx context.Context, id string) error
 }
-type ListParams struct {
-	Page     int
-	PageSize int
-	Name     *string
-	Category *string
-	MinPrice *float64
-	MaxPrice *float64
-	MinStock *int32
-	MaxStock *int32
-	Sort     *string
-}
+
 type service struct {
 	repo Repository
 	rdb  *redis.Client

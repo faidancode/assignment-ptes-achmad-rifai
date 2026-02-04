@@ -85,18 +85,18 @@ func (mr *MockRepositoryMockRecorder) GetByID(ctx, id any) *gomock.Call {
 }
 
 // GetCategories mocks base method.
-func (m *MockRepository) GetCategories(ctx context.Context) ([]dbgen.GetCategoriesRow, error) {
+func (m *MockRepository) GetCategories(ctx context.Context, params dbgen.GetCategoriesParams) ([]dbgen.GetCategoriesRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCategories", ctx)
+	ret := m.ctrl.Call(m, "GetCategories", ctx, params)
 	ret0, _ := ret[0].([]dbgen.GetCategoriesRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCategories indicates an expected call of GetCategories.
-func (mr *MockRepositoryMockRecorder) GetCategories(ctx any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetCategories(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCategories", reflect.TypeOf((*MockRepository)(nil).GetCategories), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCategories", reflect.TypeOf((*MockRepository)(nil).GetCategories), ctx, params)
 }
 
 // Update mocks base method.

@@ -86,18 +86,18 @@ func (mr *MockServiceMockRecorder) GetByID(ctx, id any) *gomock.Call {
 }
 
 // List mocks base method.
-func (m *MockService) List(ctx context.Context) ([]customer.CustomerResponse, error) {
+func (m *MockService) List(ctx context.Context, p customer.ListParams) ([]customer.CustomerResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx)
+	ret := m.ctrl.Call(m, "List", ctx, p)
 	ret0, _ := ret[0].([]customer.CustomerResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // List indicates an expected call of List.
-func (mr *MockServiceMockRecorder) List(ctx any) *gomock.Call {
+func (mr *MockServiceMockRecorder) List(ctx, p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockService)(nil).List), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockService)(nil).List), ctx, p)
 }
 
 // Update mocks base method.

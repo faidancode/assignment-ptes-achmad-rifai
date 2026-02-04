@@ -13,7 +13,11 @@ SELECT
 FROM
     customers
 ORDER BY
-    created_at DESC;
+    created_at DESC
+LIMIT
+    ?
+OFFSET
+    ?;
 
 -- name: GetCustomerByID :one
 SELECT

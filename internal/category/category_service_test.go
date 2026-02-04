@@ -75,18 +75,19 @@ func TestService_Create(t *testing.T) {
 
 func TestService_List(t *testing.T) {
 	ctx := context.Background()
+	p := category.ListParams{Page: 1, PageSize: 10}
 
 	t.Run("success", func(t *testing.T) {
 		svc, repo := setupServiceTest(t)
 
 		repo.EXPECT().
-			GetCategories(ctx).
+			GetCategories(ctx, p).
 			Return([]dbgen.GetCategoriesRow{
 				{ID: "1", Name: "Food"},
 				{ID: "2", Name: "Drink"},
 			}, nil)
 
-		res, err := svc.List(ctx)
+		res, err := svc.List(ctx, p)
 
 		assert.NoError(t, err)
 		assert.Len(t, res, 2)
@@ -96,10 +97,10 @@ func TestService_List(t *testing.T) {
 		svc, repo := setupServiceTest(t)
 
 		repo.EXPECT().
-			GetCategories(ctx).
+			GetCategories(ctx, p).
 			Return(nil, errors.New("db error"))
 
-		_, err := svc.List(ctx)
+		_, err := svc.List(ctx, p)
 
 		assert.Error(t, err)
 	})

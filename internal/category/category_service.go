@@ -4,6 +4,7 @@ import (
 	"assignment-ptes-achmad-rifai/internal/shared/database/dbgen"
 	"assignment-ptes-achmad-rifai/internal/shared/database/helper"
 	"context"
+	"log"
 
 	"github.com/google/uuid"
 )
@@ -11,7 +12,7 @@ import (
 //go:generate mockgen -source=category_service.go -destination=mocks/category_service_mock.go -package=mock
 type Service interface {
 	Create(ctx context.Context, req CreateCategoryRequest) (CategoryResponse, error)
-	List(ctx context.Context) ([]CategoryResponse, error)
+	List(ctx context.Context, params ListParams) ([]CategoryResponse, error)
 	GetByID(ctx context.Context, id string) (CategoryResponse, error)
 	Update(ctx context.Context, id string, req UpdateCategoryRequest) (CategoryResponse, error)
 	Delete(ctx context.Context, id string) error
@@ -52,8 +53,23 @@ func (s *service) Create(
 	}, nil
 }
 
-func (s *service) List(ctx context.Context) ([]CategoryResponse, error) {
-	rows, err := s.repo.GetCategories(ctx)
+func (s *service) List(ctx context.Context, p ListParams) ([]CategoryResponse, error) {
+	if p.Page <= 0 {
+		p.Page = 1
+	}
+	if p.PageSize <= 0 {
+		p.PageSize = 10
+	}
+
+	limit := int32(p.PageSize)
+	offset := int32((p.Page - 1) * p.PageSize)
+
+	// DEBUG: Cek di console saat runtime
+	log.Printf("Executing GetCategories with Limit: %d, Offset: %d", limit, offset)
+	rows, err := s.repo.GetCategories(ctx, dbgen.GetCategoriesParams{
+		Limit:  limit,
+		Offset: offset,
+	})
 	if err != nil {
 		return nil, err
 	}

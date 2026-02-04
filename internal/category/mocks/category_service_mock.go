@@ -11,6 +11,7 @@ package mock
 
 import (
 	category "assignment-ptes-achmad-rifai/internal/category"
+	dbgen "assignment-ptes-achmad-rifai/internal/shared/database/dbgen"
 	context "context"
 	reflect "reflect"
 
@@ -86,18 +87,18 @@ func (mr *MockServiceMockRecorder) GetByID(ctx, id any) *gomock.Call {
 }
 
 // List mocks base method.
-func (m *MockService) List(ctx context.Context) ([]category.CategoryResponse, error) {
+func (m *MockService) List(ctx context.Context, params dbgen.GetCategoriesParams) ([]category.CategoryResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx)
+	ret := m.ctrl.Call(m, "List", ctx, params)
 	ret0, _ := ret[0].([]category.CategoryResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // List indicates an expected call of List.
-func (mr *MockServiceMockRecorder) List(ctx any) *gomock.Call {
+func (mr *MockServiceMockRecorder) List(ctx, params any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockService)(nil).List), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockService)(nil).List), ctx, params)
 }
 
 // Update mocks base method.

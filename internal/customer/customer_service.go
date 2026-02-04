@@ -11,7 +11,7 @@ import (
 //go:generate mockgen -source=customer_service.go -destination=mocks/customer_service_mock.go -package=mock
 type Service interface {
 	Create(ctx context.Context, req CreateCustomerRequest) (CustomerResponse, error)
-	List(ctx context.Context) ([]CustomerResponse, error)
+	List(ctx context.Context, p ListParams) ([]CustomerResponse, error)
 	GetByID(ctx context.Context, id string) (CustomerResponse, error)
 	Update(ctx context.Context, id string, req UpdateCustomerRequest) (CustomerResponse, error)
 	Delete(ctx context.Context, id string) error
@@ -48,8 +48,20 @@ func (s *service) Create(ctx context.Context, req CreateCustomerRequest) (Custom
 	}, nil
 }
 
-func (s *service) List(ctx context.Context) ([]CustomerResponse, error) {
-	rows, err := s.repo.GetCustomers(ctx)
+func (s *service) List(ctx context.Context, p ListParams) ([]CustomerResponse, error) {
+	if p.Page <= 0 {
+		p.Page = 1
+	}
+	if p.PageSize <= 0 {
+		p.PageSize = 10
+	}
+
+	limit := int32(p.PageSize)
+	offset := int32((p.Page - 1) * p.PageSize)
+	rows, err := s.repo.GetCustomers(ctx, dbgen.GetCustomersParams{
+		Limit:  limit,
+		Offset: offset,
+	})
 	if err != nil {
 		return nil, err
 	}

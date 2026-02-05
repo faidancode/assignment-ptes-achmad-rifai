@@ -1,5 +1,10 @@
 # Go Product Dashboard API 
 
+## Link
+```json
+https://github.com/faidancode/assignment-ptes-achmad-rifai
+```
+
 Project ini adalah implementasi sistem manajemen produk dan dashboard statistik menggunakan **Golang** dengan fokus pada performa tinggi melalui **Redis Caching** dan **SQL Aggregation**.
 
 ## Tech Stack
